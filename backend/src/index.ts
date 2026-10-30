@@ -74,9 +74,9 @@ async function start() {
     cleanupExpiredFiles().catch(console.error);
   }, 30 * 60 * 1000);
 
-  app.listen(PORT, () => {
-    console.log(`\n🎬 VidGrab Backend running at http://localhost:${PORT}`);
-    console.log(`   Health: http://localhost:${PORT}/api/health\n`);
+  app.listen(Number(PORT), '0.0.0.0', () => {
+    console.log(`\n🎬 VidGrab Backend running at http://0.0.0.0:${PORT}`);
+    console.log(`   Health: http://0.0.0.0:${PORT}/api/health\n`);
   });
 }
 
