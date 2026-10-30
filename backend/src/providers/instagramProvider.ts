@@ -11,12 +11,15 @@ export class InstagramProvider implements IProvider {
   }
 
   async getMetadata(url: URL, rawUrl: string): Promise<ProviderResult<VideoMetadata>> {
+    const shortcodeMatch = url.pathname.match(/\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/);
+    const shortcode = shortcodeMatch ? shortcodeMatch[1] : null;
+
     // 1. First attempt: Use yt-dlp engine
     if (isYtDlpAvailable()) {
       try {
         const info = await getYtDlpMetadata(rawUrl);
         if (info && (info.formats?.length || info.url)) {
-          const title = info.title || 'Instagram Reel';
+          const title = info.title || `Instagram Reel ${shortcode || ''}`.trim();
           const thumbnail = info.thumbnail;
           const duration = info.duration ? Math.round(info.duration) : undefined;
 
@@ -53,7 +56,7 @@ export class InstagramProvider implements IProvider {
             });
           }
 
-          // Also add a yt-dlp based fallback format
+          // Also add a yt-dlp based fallback format for merging
           if (formats.length === 0) {
             formats.push({
               id: 'insta_ytdlp',
@@ -83,16 +86,13 @@ export class InstagramProvider implements IProvider {
           }
         }
       } catch {
-        // Fall through to fallback method
+        // Fall through to fallback methods
       }
     }
 
-    // 2. Fallback attempt: OpenGraph extraction from embed page
-    try {
-      const shortcodeMatch = url.pathname.match(/\/(?:p|reel|reels|tv)\/([a-zA-Z0-9_-]+)/);
-      const shortcode = shortcodeMatch ? shortcodeMatch[1] : null;
-
-      if (shortcode) {
+    // 2. Fallback: Try OpenGraph/embed extraction
+    if (shortcode) {
+      try {
         const embedUrl = `https://www.instagram.com/p/${shortcode}/embed/captioned/`;
         const res = await axios.get(embedUrl, {
           headers: {
@@ -128,15 +128,41 @@ export class InstagramProvider implements IProvider {
             },
           };
         }
+      } catch {
+        // Ignore
       }
-    } catch {
-      // Ignore
+
+      // 3. Fallback: Try yt-dlp with format for Instagram
+      if (isYtDlpAvailable()) {
+        // Return a yt-dlp format that will attempt download with best effort
+        return {
+          success: true,
+          data: {
+            url: rawUrl,
+            title: `Instagram Reel ${shortcode}`,
+            sourceDomain: 'instagram.com',
+            provider: this.name,
+            formats: [
+              {
+                id: 'insta_ytdlp_fallback',
+                label: '⭐ Best Available (MP4)',
+                quality: 'Best',
+                format: 'mp4',
+                mimeType: 'video/mp4',
+                url: `ytdlp:best||${rawUrl}`,
+                hasVideo: true,
+                hasAudio: true,
+              },
+            ],
+          },
+        };
+      }
     }
 
     return {
       success: false,
       error:
-        'Instagram blocked extraction for this reel. Instagram strictly requires an active login session to access its video files.',
+        'Instagram requires login to access this reel. Instagram has strict anti-scraping measures — try pasting a YouTube, Twitter/X, or Facebook video URL instead.',
     };
   }
 }
