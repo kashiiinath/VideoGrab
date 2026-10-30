@@ -2,8 +2,6 @@ services:
   - type: web
     name: videograb-backend
     env: docker
-    dockerContext: backend
-    dockerfilePath: Dockerfile
     plan: free
     region: oregon
     healthCheckPath: /api/health
