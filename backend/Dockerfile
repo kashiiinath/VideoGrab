@@ -9,20 +9,22 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
-# Install yt-dlp via pip (most reliable cross-platform installation)
-RUN pip3 install --no-cache-dir yt-dlp
+# Install latest yt-dlp
+RUN curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o /usr/local/bin/yt-dlp \
+    && chmod a+rx /usr/local/bin/yt-dlp \
+    || pip3 install --no-cache-dir yt-dlp --break-system-packages
 
 WORKDIR /app
 
-# Copy package files
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
 
-# Copy source and config
+# Copy source files and config
 COPY tsconfig.json ./
 COPY src/ ./src/
 
-# Build TypeScript
+# Build TypeScript to dist/
 RUN npm run build
 
 EXPOSE 3001
