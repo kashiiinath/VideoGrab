@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100" fill="none">
+  <defs>
+    <linearGradient id="vg-logograd-def" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#00B8FF" />
+      <stop offset="50%" stop-color="#563BFF" />
+      <stop offset="100%" stop-color="#DB20E8" />
+    </linearGradient>
+    <linearGradient id="vg-textgrad-def" x1="200" y1="30" x2="380" y2="70" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#FFFFFF" />
+      <stop offset="60%" stop-color="#E2E8FF" />
+      <stop offset="100%" stop-color="#DB20E8" />
+    </linearGradient>
+  </defs>
+
+  <!-- Symbol -->
+  <g transform="translate(10, 10)">
+    <path d="M22 17C22 11.2 28.5 7.8 33.3 11L76.5 39.8C81 42.8 81 49.2 76.5 52.2L33.3 81C28.5 84.2 22 80.8 22 75V17Z" 
+          fill="url(#vg-logograd-def)" />
+    <!-- Download Arrow -->
+    <path d="M47 34C47 32.5 48.2 31.3 49.7 31.3C51.2 31.3 52.4 32.5 52.4 34V54.5L58 48.9C59.1 47.8 60.8 47.8 61.9 48.9C63 50 63 51.7 61.9 52.8L51.6 63.1C50.6 64.1 48.9 64.1 47.8 63.1L37.5 52.8C36.4 51.7 36.4 50 37.5 48.9C38.6 47.8 40.3 47.8 41.4 48.9L47 54.5V34Z" fill="#FFFFFF"/>
+    <path d="M36 65C34.5 65 33.3 66.2 33.3 67.7C33.3 69.2 34.5 70.4 36 70.4H63.4C64.9 70.4 66.1 69.2 66.1 67.7C66.1 66.2 64.9 65 63.4 65H59V67.7H40.4V65H36Z" fill="#FFFFFF"/>
+  </g>
+
+  <!-- Wordmark -->
+  <text x="110" y="62" font-family="'Inter', -apple-system, sans-serif" font-weight="900" font-size="46" letter-spacing="-1" fill="url(#vg-textgrad-def)">VIDGRAB</text>
+  <text x="112" y="82" font-family="'Inter', -apple-system, sans-serif" font-weight="500" font-size="13" letter-spacing="1.5" fill="#A4A8BD">FAST • SIMPLE • POWERFUL</text>
+</svg>

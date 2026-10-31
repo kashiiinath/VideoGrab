@@ -4,7 +4,7 @@ import React from 'react';
 import { Home, Download, History, Settings } from 'lucide-react';
 import { useApp, TabName } from '@/context/AppContext';
 
-const tabs: { id: TabName; label: string; icon: React.FC<{ size?: number; strokeWidth?: number }> }[] = [
+const tabs: { id: TabName; label: string; icon: React.FC<{ size?: number; strokeWidth?: number; className?: string }> }[] = [
   { id: 'home',      label: 'Home',      icon: Home },
   { id: 'downloads', label: 'Downloads', icon: Download },
   { id: 'history',   label: 'History',   icon: History },
@@ -17,10 +17,16 @@ export default function BottomNav() {
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-50 bg-white dark:bg-neutral-900 border-t border-neutral-200 dark:border-neutral-800"
-      style={{ maxWidth: '28rem', margin: '0 auto', left: '50%', transform: 'translateX(-50%)', width: '100%' }}
+      className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md"
     >
-      <div className="flex items-stretch safe-area-pb">
+      <div
+        className="backdrop-blur-xl rounded-3xl border px-3 py-2 flex items-center justify-around shadow-2xl transition-all"
+        style={{
+          backgroundColor: 'var(--vg-dock-bg)',
+          borderColor: 'var(--vg-dock-border)',
+          boxShadow: 'var(--vg-dock-shadow)',
+        }}
+      >
         {tabs.map(({ id, label, icon: Icon }) => {
           const active = activeTab === id;
           const showBadge = id === 'downloads' && activeCount > 0;
@@ -30,31 +36,43 @@ export default function BottomNav() {
               key={id}
               onClick={() => setActiveTab(id)}
               className={`
-                flex-1 flex flex-col items-center justify-center pt-2 pb-1 gap-0.5 relative
-                transition-colors duration-150 min-h-[56px]
+                relative flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl
+                transition-all duration-200 select-none
                 ${active
-                  ? 'text-violet-600 dark:text-violet-400'
-                  : 'text-neutral-400 dark:text-neutral-500'}
+                  ? 'bg-gradient-to-r from-[#00B8FF]/15 via-[#563BFF]/20 to-[#DB20E8]/15 text-[#563BFF] dark:text-[#00B8FF]'
+                  : 'text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)]'}
               `}
               aria-label={label}
             >
-              {/* Active indicator dot at top */}
+              {/* Active glow backing */}
               {active && (
-                <span className="absolute top-0 left-1/2 -translate-x-1/2 w-8 h-0.5 bg-violet-600 dark:bg-violet-400 rounded-full" />
+                <div
+                  className="absolute inset-0 rounded-2xl bg-gradient-to-r from-[#00B8FF]/20 via-[#563BFF]/25 to-[#DB20E8]/20 blur-sm -z-10"
+                />
               )}
 
               {/* Icon with badge */}
-              <span className="relative">
-                <Icon size={22} strokeWidth={active ? 2.5 : 1.8} />
+              <div className="relative">
+                <Icon
+                  size={20}
+                  strokeWidth={active ? 2.5 : 2}
+                  className={active ? 'text-[#00B8FF] dark:text-[#00B8FF]' : 'text-current'}
+                />
                 {showBadge && (
-                  <span className="absolute -top-1.5 -right-2 bg-violet-600 text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none">
+                  <span className="absolute -top-1.5 -right-2.5 bg-gradient-to-r from-[#563BFF] to-[#DB20E8] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none shadow-sm">
                     {activeCount > 9 ? '9+' : activeCount}
                   </span>
                 )}
-              </span>
+              </div>
 
               {/* Label */}
-              <span className={`text-[10px] font-medium leading-none ${active ? 'text-violet-600 dark:text-violet-400' : 'text-neutral-400 dark:text-neutral-500'}`}>
+              <span
+                className={`text-[11px] font-semibold mt-1 tracking-tight leading-none ${
+                  active
+                    ? 'gradient-text font-bold'
+                    : 'text-current font-medium'
+                }`}
+              >
                 {label}
               </span>
             </button>

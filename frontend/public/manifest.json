@@ -1,25 +1,31 @@
 {
-  "name": "VidGrab – Video Downloader",
-  "short_name": "VidGrab",
-  "description": "Download videos from direct URLs, HLS streams and Vimeo.",
+  "name": "VIDGRAB – Universal Video Downloader",
+  "short_name": "VIDGRAB",
+  "description": "Fast, simple, powerful video downloader for YouTube, Instagram, X, TikTok, Facebook and more.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#7c3aed",
+  "background_color": "#070810",
+  "theme_color": "#563BFF",
   "orientation": "portrait-primary",
-  "categories": ["utilities", "productivity"],
+  "categories": ["utilities", "productivity", "multimedia"],
   "icons": [
     {
       "src": "/icons/icon-192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
     },
     {
       "src": "/icons/icon-512.png",
       "sizes": "512x512",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
   ],
   "screenshots": []

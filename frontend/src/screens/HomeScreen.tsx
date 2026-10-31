@@ -7,14 +7,17 @@ import Logo from '@/components/Logo';
 import UrlInput from '@/components/UrlInput';
 import VideoCard from '@/components/VideoCard';
 import { SupportedSource } from '@/lib/types';
-import { Wifi, WifiOff, ChevronDown, ChevronUp, Globe, Zap, Shield } from 'lucide-react';
+import {
+  Crown, Settings as SettingsIcon, Play, CheckCircle2, Clock, MoreVertical,
+  Sparkles, Zap, Layers, AlertCircle, WifiOff
+} from 'lucide-react';
 
 export default function HomeScreen() {
-  const { analyzedVideo, setAnalyzedVideo, backendOnline, jobs } = useApp();
+  const { analyzedVideo, setAnalyzedVideo, backendOnline, jobs, setActiveTab } = useApp();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [sources, setSources] = useState<SupportedSource[]>([]);
-  const [showSources, setShowSources] = useState(false);
+  const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
 
   useEffect(() => {
     getSupportedSources()
@@ -39,126 +42,244 @@ export default function HomeScreen() {
 
   const recentJobs = jobs.slice(0, 3);
 
+  // Social Platforms with brand colors matching Design 2
+  const platforms = [
+    {
+      id: 'youtube',
+      name: 'YouTube',
+      bg: 'bg-red-600',
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+        </svg>
+      ),
+      sample: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+    },
+    {
+      id: 'instagram',
+      name: 'Instagram',
+      bg: 'bg-gradient-to-tr from-amber-500 via-rose-500 to-purple-600',
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+          <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+        </svg>
+      ),
+      sample: 'https://www.instagram.com/reel/...',
+    },
+    {
+      id: 'facebook',
+      name: 'Facebook',
+      bg: 'bg-blue-600',
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+          <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+        </svg>
+      ),
+      sample: 'https://www.facebook.com/watch?v=...',
+    },
+    {
+      id: 'tiktok',
+      name: 'TikTok',
+      bg: 'bg-black dark:bg-neutral-900 border border-neutral-700',
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+          <path d="M12.525.02c1.31-.02 2.61-.01 3.91-.02.08 1.53.63 3.09 1.75 4.17 1.12 1.11 2.7 1.62 4.24 1.79v4.03c-1.44-.05-2.89-.35-4.2-.97-.57-.26-1.1-.59-1.62-.93-.01 2.92.01 5.84-.02 8.75-.08 1.4-.54 2.79-1.35 3.94-1.31 1.92-3.58 3.17-5.91 3.21-1.43.08-2.86-.31-4.08-1.03-2.02-1.19-3.44-3.37-3.65-5.71-.02-.5-.03-1-.01-1.49.18-1.9 1.12-3.72 2.58-4.96 1.66-1.44 3.98-2.13 6.15-1.72.02 1.48-.04 2.96-.04 4.44-.99-.32-2.15-.23-3.02.37-.63.41-1.11 1.04-1.36 1.75-.21.51-.24 1.07-.14 1.61.24 1.64 1.82 3.02 3.5 2.87 1.12-.01 2.19-.66 2.77-1.61.19-.33.4-.67.41-1.06.1-1.79.06-3.57.07-5.36.01-4.03-.01-8.05.02-12.07z"/>
+        </svg>
+      ),
+      sample: 'https://www.tiktok.com/@user/video/...',
+    },
+    {
+      id: 'vimeo',
+      name: 'Vimeo',
+      bg: 'bg-sky-500',
+      icon: (
+        <svg viewBox="0 0 24 24" className="w-5 h-5 fill-white">
+          <path d="M23.977 6.416c-.105 2.338-1.739 5.543-4.894 9.609-3.268 4.247-6.026 6.37-8.29 6.37-1.409 0-2.578-1.294-3.553-3.881L5.322 11.4C4.603 8.816 3.834 7.522 3.01 7.522c-.179 0-.806.378-1.881 1.132L0 7.197c1.185-1.044 2.351-2.084 3.501-3.128 1.591-1.417 2.784-2.167 3.585-2.249 1.884-.176 3.047 1.096 3.493 3.818.529 3.25 1.054 6.007 1.579 8.271.74 3.184 1.558 4.776 2.457 4.776.697 0 1.62-.976 2.77-2.928 1.15-1.953 1.77-3.447 1.862-4.484.185-1.745-.487-2.617-2.016-2.617-.735 0-1.492.168-2.271.503 1.506-4.945 4.375-7.348 8.607-7.211 3.124.103 4.604 1.776 4.47 5.018z"/>
+        </svg>
+      ),
+      sample: 'https://vimeo.com/123456789',
+    },
+  ];
+
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between pt-2">
-        <Logo size="md" showText={true} />
-        <div className={`flex items-center gap-1.5 text-xs px-2.5 py-1 rounded-full ${
-          backendOnline
-            ? 'bg-green-50 dark:bg-green-900/20 text-green-600 dark:text-green-400'
-            : 'bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400'
-        }`}>
-          {backendOnline
-            ? <><Wifi className="w-3 h-3" />Online</>
-            : <><WifiOff className="w-3 h-3" />Offline</>}
+    <div className="space-y-6">
+      {/* 1. Header with Logo, PRO Badge, Settings Shortcut */}
+      <div className="flex items-center justify-between pt-1">
+        <Logo size="md" showText={true} showSubtitle={true} />
+
+        <div className="flex items-center gap-2">
+          {/* PRO Badge */}
+          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-yellow-500/20 border border-amber-500/40 text-amber-500 dark:text-amber-400 font-bold text-[11px] shadow-sm select-none">
+            <Crown size={12} className="fill-amber-400 text-amber-500" />
+            <span>PRO</span>
+          </div>
+
+          {/* Settings Shortcut Button */}
+          <button
+            onClick={() => setActiveTab('settings')}
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-[var(--vg-border)] text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:border-[#563BFF]/40 bg-[var(--vg-card)] transition-colors shadow-sm"
+            aria-label="Settings"
+          >
+            <SettingsIcon size={17} />
+          </button>
         </div>
       </div>
 
-      {/* Hero headline */}
-      <div>
-        <h1 className="text-2xl font-bold text-neutral-900 dark:text-white leading-tight">
-          Download any<br />
-          <span className="text-violet-600 dark:text-violet-400">video, instantly.</span>
-        </h1>
-        <p className="text-sm text-neutral-500 dark:text-neutral-400 mt-1.5">
-          Paste a video URL below to get started.
-        </p>
-      </div>
+      {/* Backend Offline Banner */}
+      {!backendOnline && (
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-2xl p-3.5 flex items-start gap-3">
+          <WifiOff size={16} className="text-amber-500 flex-shrink-0 mt-0.5" />
+          <div>
+            <p className="text-xs font-bold text-amber-500">Backend is reconnecting</p>
+            <p className="text-[11px] text-[var(--vg-text-muted)] mt-0.5 leading-snug">
+              Ensuring connection to VidGrab backend engine at localhost:3001.
+            </p>
+          </div>
+        </div>
+      )}
 
-      {/* URL Input */}
+      {/* 2. Hero URL Input Section */}
       <UrlInput onAnalyze={handleAnalyze} loading={loading} error={error} />
 
-      {/* Backend offline warning */}
-      {!backendOnline && (
-        <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-2xl p-4">
-          <div className="flex items-start gap-2.5">
-            <WifiOff className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" />
-            <div>
-              <p className="text-sm font-semibold text-amber-700 dark:text-amber-400">Backend not running</p>
-              <p className="text-xs text-amber-600 dark:text-amber-500 mt-0.5 leading-snug">
-                Start the backend server with <code className="bg-amber-100 dark:bg-amber-800/50 px-1 rounded">npm run dev:backend</code> in the project root.
-              </p>
+      {/* 3. Video Preview Screen (when analyzed) OR Home Content */}
+      {analyzedVideo ? (
+        <VideoCard metadata={analyzedVideo} onBack={() => setAnalyzedVideo(null)} />
+      ) : (
+        <>
+          {/* 4. Supported Platforms Grid / Row */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-bold text-[var(--vg-text-secondary)] uppercase tracking-wider">
+                Supported Platforms
+              </span>
+              <button
+                onClick={() => setActiveTab('settings')}
+                className="text-[11px] font-semibold text-[#563BFF] dark:text-[#00B8FF] hover:underline"
+              >
+                More
+              </button>
             </div>
-          </div>
-        </div>
-      )}
 
-      {/* Video result */}
-      {analyzedVideo && <VideoCard metadata={analyzedVideo} />}
-
-      {/* Recent activity */}
-      {recentJobs.length > 0 && !analyzedVideo && (
-        <div className="space-y-3">
-          <h2 className="text-sm font-semibold text-neutral-700 dark:text-neutral-300">Recent Downloads</h2>
-          <div className="space-y-2">
-            {recentJobs.map(job => (
-              <div key={job.id} className="flex items-center gap-3 bg-white dark:bg-neutral-800 rounded-xl px-3 py-2.5 border border-neutral-100 dark:border-neutral-700">
-                {job.thumbnail ? (
-                  <img src={job.thumbnail} alt="" className="w-10 h-8 rounded-lg object-cover flex-shrink-0" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
-                ) : (
-                  <div className="w-10 h-8 rounded-lg bg-neutral-100 dark:bg-neutral-700 flex-shrink-0" />
-                )}
-                <div className="flex-1 min-w-0">
-                  <p className="text-xs font-medium text-neutral-800 dark:text-white truncate">{job.title || job.filename}</p>
-                  <p className="text-[10px] text-neutral-400 mt-0.5">{job.quality} · {job.format?.toUpperCase()}</p>
-                </div>
-                <span className={`text-[10px] font-medium px-2 py-0.5 rounded-full ${
-                  job.status === 'completed' ? 'bg-green-100 text-green-600' :
-                  job.status === 'failed' ? 'bg-red-100 text-red-500' :
-                  'bg-violet-100 text-violet-600'
-                }`}>{job.status}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Features strip */}
-      {!analyzedVideo && (
-        <div className="grid grid-cols-3 gap-2">
-          {[
-            { icon: Zap, title: 'Fast', desc: 'Direct stream' },
-            { icon: Shield, title: 'Private', desc: 'Local only' },
-            { icon: Globe, title: 'Multi-source', desc: 'MP4, WebM, HLS' },
-          ].map(({ icon: Icon, title, desc }) => (
-            <div key={title} className="bg-white dark:bg-neutral-800 rounded-2xl p-3 text-center border border-neutral-100 dark:border-neutral-700">
-              <div className="w-8 h-8 bg-violet-50 dark:bg-violet-900/30 rounded-xl flex items-center justify-center mx-auto mb-2">
-                <Icon className="w-4 h-4 text-violet-500" />
-              </div>
-              <p className="text-xs font-semibold text-neutral-800 dark:text-white">{title}</p>
-              <p className="text-[10px] text-neutral-400 mt-0.5">{desc}</p>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* Supported sources */}
-      {sources.length > 0 && (
-        <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-100 dark:border-neutral-700 overflow-hidden">
-          <button
-            onClick={() => setShowSources(v => !v)}
-            className="w-full flex items-center justify-between px-4 py-3.5 text-sm font-semibold text-neutral-800 dark:text-white"
-          >
-            <span>Supported Sources</span>
-            {showSources ? <ChevronUp className="w-4 h-4 text-neutral-400" /> : <ChevronDown className="w-4 h-4 text-neutral-400" />}
-          </button>
-          {showSources && (
-            <div className="border-t border-neutral-100 dark:border-neutral-700 divide-y divide-neutral-100 dark:divide-neutral-700">
-              {sources.map(src => (
-                <div key={src.name} className="px-4 py-3">
-                  <p className="text-xs font-semibold text-neutral-800 dark:text-white">{src.name}</p>
-                  <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{src.description}</p>
-                  {src.examples.length > 0 && (
-                    <p className="text-[10px] text-neutral-400 dark:text-neutral-500 mt-1 font-mono truncate">
-                      e.g. {src.examples[0]}
-                    </p>
-                  )}
-                </div>
+            <div className="grid grid-cols-5 gap-2.5">
+              {platforms.map((p) => (
+                <button
+                  key={p.id}
+                  onClick={() => setSelectedPlatform(p.id)}
+                  className="flex flex-col items-center gap-1.5 p-2 rounded-2xl hover:bg-[var(--vg-card)] border border-transparent hover:border-[var(--vg-border)] transition-all group"
+                >
+                  <div className={`w-11 h-11 rounded-2xl ${p.bg} flex items-center justify-center shadow-md group-hover:scale-105 transition-transform`}>
+                    {p.icon}
+                  </div>
+                  <span className="text-[11px] font-semibold text-[var(--vg-text-secondary)] group-hover:text-[var(--vg-text-primary)] truncate max-w-full">
+                    {p.name}
+                  </span>
+                </button>
               ))}
             </div>
-          )}
-        </div>
+          </div>
+
+          {/* 5. Feature Highlights Pills */}
+          <div className="grid grid-cols-3 gap-2 pt-1">
+            <div className="rounded-2xl p-3 text-center border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center mx-auto mb-1.5">
+                <Sparkles size={16} />
+              </div>
+              <p className="text-[12px] font-bold text-[var(--vg-text-primary)]">High Quality</p>
+              <p className="text-[10px] text-[var(--vg-text-muted)] font-medium mt-0.5">Up to 4K</p>
+            </div>
+
+            <div className="rounded-2xl p-3 text-center border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-[#563BFF]/15 text-[#563BFF] dark:text-[#00B8FF] flex items-center justify-center mx-auto mb-1.5">
+                <Zap size={16} />
+              </div>
+              <p className="text-[12px] font-bold text-[var(--vg-text-primary)]">Fast Download</p>
+              <p className="text-[10px] text-[var(--vg-text-muted)] font-medium mt-0.5">Super Fast</p>
+            </div>
+
+            <div className="rounded-2xl p-3 text-center border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm">
+              <div className="w-8 h-8 rounded-xl bg-[#DB20E8]/15 text-[#DB20E8] flex items-center justify-center mx-auto mb-1.5">
+                <Layers size={16} />
+              </div>
+              <p className="text-[12px] font-bold text-[var(--vg-text-primary)]">Multi Formats</p>
+              <p className="text-[10px] text-[var(--vg-text-muted)] font-medium mt-0.5">MP4, WebM</p>
+            </div>
+          </div>
+
+          {/* 6. Recent Downloads Section */}
+          <div className="space-y-3 pt-2">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-sm font-bold text-[var(--vg-text-primary)]">
+                Recent Downloads
+              </h2>
+              <button
+                onClick={() => setActiveTab('downloads')}
+                className="text-xs font-bold text-[#563BFF] dark:text-[#00B8FF] hover:underline"
+              >
+                See All
+              </button>
+            </div>
+
+            {recentJobs.length === 0 ? (
+              <div className="rounded-3xl border border-dashed border-[var(--vg-border)] p-6 text-center bg-[var(--vg-card)]">
+                <p className="text-xs font-medium text-[var(--vg-text-secondary)]">
+                  No downloads yet.
+                </p>
+                <p className="text-[11px] text-[var(--vg-text-muted)] mt-1">
+                  Paste a video link above and click Analyze to start your first download!
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {recentJobs.map((job) => (
+                  <div
+                    key={job.id}
+                    className="flex items-center gap-3 p-3 rounded-2xl border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm hover:border-[#563BFF]/30 transition-all"
+                  >
+                    {/* Thumbnail with mini play overlay */}
+                    <div className="relative w-14 h-11 rounded-xl overflow-hidden bg-neutral-900 flex-shrink-0 border border-[var(--vg-border)]">
+                      {job.thumbnail ? (
+                        <img
+                          src={job.thumbnail}
+                          alt=""
+                          className="w-full h-full object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+                          <Play size={12} className="text-neutral-400" />
+                        </div>
+                      )}
+                      <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+                        <Play size={10} className="fill-white text-white opacity-80" />
+                      </div>
+                    </div>
+
+                    {/* Title & Format Info */}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[13px] font-bold text-[var(--vg-text-primary)] truncate">
+                        {job.title || job.filename}
+                      </p>
+                      <p className="text-[11px] font-semibold text-[var(--vg-text-muted)] mt-0.5">
+                        {job.format?.toUpperCase() || 'MP4'} • {job.quality || 'HD'}
+                      </p>
+                    </div>
+
+                    {/* Status Badge */}
+                    <div className="flex items-center gap-1.5 flex-shrink-0">
+                      {job.status === 'completed' ? (
+                        <CheckCircle2 size={18} className="text-emerald-500 fill-emerald-500/20" />
+                      ) : job.status === 'failed' ? (
+                        <AlertCircle size={18} className="text-rose-500" />
+                      ) : (
+                        <Clock size={18} className="text-[#563BFF] animate-pulse" />
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

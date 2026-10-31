@@ -7,7 +7,7 @@ import { downloadViaProxy } from '@/lib/download';
 import { useApp } from '@/context/AppContext';
 import StatusBadge from './StatusBadge';
 import {
-  Trash2, RefreshCw, Download, Film, X, ChevronDown, ChevronUp, AlertCircle,
+  Trash2, RefreshCw, Download, Film, ChevronDown, ChevronUp, AlertCircle, Play, CheckCircle2
 } from 'lucide-react';
 
 interface DownloadItemProps {
@@ -57,116 +57,125 @@ export default function DownloadItem({ job }: DownloadItemProps) {
     document.body.removeChild(a);
   }
 
-  const thumbnailUrl = job.thumbnail;
-
   return (
-    <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-100 dark:border-neutral-700 overflow-hidden">
-      <div className="flex items-start gap-3 p-3">
+    <div
+      className="rounded-2xl border p-3 space-y-2.5 transition-all shadow-sm"
+      style={{
+        backgroundColor: 'var(--vg-card)',
+        borderColor: 'var(--vg-border)',
+      }}
+    >
+      <div className="flex items-center gap-3">
         {/* Thumbnail */}
-        <div className="w-16 h-12 rounded-xl overflow-hidden bg-neutral-100 dark:bg-neutral-700 flex-shrink-0 flex items-center justify-center">
-          {thumbnailUrl ? (
-            <img src={thumbnailUrl} alt="" className="w-full h-full object-cover" onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+        <div className="relative w-16 h-12 rounded-xl overflow-hidden bg-neutral-900 border border-[var(--vg-border)] flex-shrink-0">
+          {job.thumbnail ? (
+            <img
+              src={job.thumbnail}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none'; }}
+            />
           ) : (
-            <Film className="w-5 h-5 text-neutral-400" />
+            <div className="w-full h-full flex items-center justify-center bg-neutral-800">
+              <Film size={18} className="text-neutral-500" />
+            </div>
           )}
+          <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
+            <Play size={10} className="fill-white text-white opacity-90" />
+          </div>
         </div>
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-medium text-neutral-800 dark:text-white truncate leading-snug">
+          <p className="text-[13px] font-bold text-[var(--vg-text-primary)] truncate">
             {job.title || job.filename || 'Untitled'}
           </p>
-          <div className="flex items-center gap-2 mt-1 flex-wrap">
-            <StatusBadge status={job.status} />
-            {job.format && (
-              <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                {job.format.toUpperCase()} · {job.quality}
-              </span>
-            )}
+          <div className="flex items-center gap-2 mt-1 text-[11px] text-[var(--vg-text-muted)] font-medium">
+            <span>{job.quality || 'HD'}</span>
+            <span>•</span>
+            <span>{job.format?.toUpperCase() || 'MP4'}</span>
             {job.fileSize && (
-              <span className="text-xs text-neutral-400 dark:text-neutral-500">
-                {formatBytes(job.fileSize)}
-              </span>
+              <>
+                <span>•</span>
+                <span>{formatBytes(job.fileSize)}</span>
+              </>
             )}
           </div>
-
-          {/* Progress bar */}
-          {job.status === 'processing' && (
-            <div className="mt-2 space-y-0.5">
-              <div className="h-1.5 bg-neutral-100 dark:bg-neutral-700 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-violet-500 rounded-full transition-all duration-300"
-                  style={{ width: `${job.progress}%` }}
-                />
-              </div>
-              <p className="text-[10px] text-neutral-400">{job.progress}%</p>
-            </div>
-          )}
         </div>
 
-        {/* Expand toggle */}
-        <button
-          onClick={() => setExpanded(v => !v)}
-          className="p-1.5 text-neutral-400 hover:text-neutral-600 dark:hover:text-neutral-300 transition-colors flex-shrink-0"
-          aria-label="Toggle details"
-        >
-          {expanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
-        </button>
+        {/* Status / Quick Action */}
+        <div className="flex items-center gap-1.5 flex-shrink-0">
+          {job.status === 'completed' && (
+            <CheckCircle2 size={18} className="text-emerald-500 fill-emerald-500/20" />
+          )}
+
+          <button
+            onClick={() => setExpanded(v => !v)}
+            className="p-1.5 rounded-full text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/10 transition-colors"
+            aria-label="Toggle details"
+          >
+            {expanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+          </button>
+        </div>
       </div>
 
-      {/* Expanded details */}
+      {/* Progress Bar (if processing) */}
+      {job.status === 'processing' && (
+        <div className="space-y-1">
+          <div className="flex justify-between text-[11px] font-semibold text-[var(--vg-text-muted)]">
+            <span>Downloading…</span>
+            <span>{job.progress}%</span>
+          </div>
+          <div className="h-1.5 bg-[var(--vg-bg-secondary)] rounded-full overflow-hidden border border-[var(--vg-border)]">
+            <div
+              className="h-full gradient-bg transition-all duration-300 rounded-full"
+              style={{ width: `${job.progress}%` }}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* Expanded Actions & Info */}
       {expanded && (
-        <div className="border-t border-neutral-100 dark:border-neutral-700 px-3 py-3 space-y-3">
-          {/* Error */}
+        <div className="border-t border-[var(--vg-border)] pt-2.5 space-y-2.5 text-xs text-[var(--vg-text-secondary)]">
           {job.errorMessage && (
-            <div className="flex items-start gap-2 bg-red-50 dark:bg-red-900/20 rounded-xl px-2.5 py-2">
-              <AlertCircle className="w-3.5 h-3.5 text-red-500 flex-shrink-0 mt-0.5" />
-              <p className="text-xs text-red-600 dark:text-red-400">{job.errorMessage}</p>
+            <div className="flex items-start gap-2 bg-red-500/10 rounded-xl p-2.5 text-red-500 font-medium">
+              <AlertCircle size={15} className="flex-shrink-0 mt-0.5" />
+              <span>{job.errorMessage}</span>
             </div>
           )}
 
-          {/* Meta */}
-          <div className="text-xs text-neutral-500 dark:text-neutral-400 space-y-1">
-            {job.filename && <p><span className="font-medium">File:</span> {job.filename}</p>}
-            {job.sourceDomain && <p><span className="font-medium">Source:</span> {job.sourceDomain}</p>}
-            <p><span className="font-medium">Started:</span> {formatDate(job.createdAt)}</p>
+          <div className="space-y-1 text-[11px]">
+            {job.filename && <p><span className="font-semibold">File:</span> {job.filename}</p>}
+            {job.sourceDomain && <p><span className="font-semibold">Source:</span> {job.sourceDomain}</p>}
+            <p><span className="font-semibold">Started:</span> {formatDate(job.createdAt)}</p>
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 pt-1">
             {(job.status === 'failed' || job.status === 'cancelled') && job.downloadUrl && (
               <button
                 onClick={handleRetry}
                 disabled={retrying}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 transition-colors disabled:opacity-60"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl gradient-btn text-white text-[11px] font-bold"
               >
-                <RefreshCw className={`w-3.5 h-3.5 ${retrying ? 'animate-spin' : ''}`} />
+                <RefreshCw size={12} className={retrying ? 'animate-spin' : ''} />
                 Retry
               </button>
             )}
             {job.status === 'completed' && job.downloadUrl && (
               <button
                 onClick={handleDownloadAgain}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-green-600 text-white text-xs font-medium hover:bg-green-700 transition-colors"
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold transition-colors"
               >
-                <Download className="w-3.5 h-3.5" />
-                Download Again
-              </button>
-            )}
-            {job.status === 'ready' && job.downloadUrl && (
-              <button
-                onClick={handleDownloadAgain}
-                className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-violet-600 text-white text-xs font-medium hover:bg-violet-700 transition-colors"
-              >
-                <Download className="w-3.5 h-3.5" />
-                Download
+                <Download size={12} />
+                Save Again
               </button>
             )}
             <button
               onClick={handleDelete}
-              className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-neutral-100 dark:bg-neutral-700 text-neutral-600 dark:text-neutral-300 text-xs font-medium hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 transition-colors ml-auto"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-red-500/20 text-red-500 hover:bg-red-500/10 text-[11px] font-semibold transition-colors ml-auto"
             >
-              <Trash2 className="w-3.5 h-3.5" />
+              <Trash2 size={12} />
               Remove
             </button>
           </div>

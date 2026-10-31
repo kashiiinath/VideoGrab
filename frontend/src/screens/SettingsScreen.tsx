@@ -6,206 +6,327 @@ import { clearHistory } from '@/lib/api';
 import Logo from '@/components/Logo';
 import {
   Sun, Moon, Monitor, Trash2, Info, Shield, CheckCircle2,
-  ChevronRight, AlertCircle,
+  ChevronRight, ArrowLeft, Globe, Download, HelpCircle, Check, X
 } from 'lucide-react';
 import { Theme } from '@/lib/types';
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, backendOnline } = useApp();
+  const { settings, updateSettings, backendOnline, setActiveTab } = useApp();
   const [historyCleared, setHistoryCleared] = useState(false);
-  const [clearError, setClearError] = useState('');
+  const [showThemeModal, setShowThemeModal] = useState(false);
+  const [showSitesModal, setShowSitesModal] = useState(false);
+  const [showAboutModal, setShowAboutModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
 
   async function handleClearHistory() {
     if (!confirm('This will delete all download history. Continue?')) return;
     try {
       await clearHistory();
       setHistoryCleared(true);
-      setTimeout(() => setHistoryCleared(false), 3000);
-      setClearError('');
-    } catch {
-      setClearError('Failed to clear history');
-    }
+      setTimeout(() => setHistoryCleared(false), 2500);
+    } catch {}
   }
 
-  const themes: { id: Theme; label: string; icon: React.FC<{ className?: string }> }[] = [
-    { id: 'light',  label: 'Light',  icon: Sun },
-    { id: 'dark',   label: 'Dark',   icon: Moon },
-    { id: 'system', label: 'System', icon: Monitor },
-  ];
+  const themeDisplay = {
+    system: 'System',
+    dark: 'Dark Mode',
+    light: 'Light Mode',
+  }[settings.theme] || 'System';
 
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="pt-2">
-        <h1 className="text-xl font-bold text-neutral-900 dark:text-white">Settings</h1>
-        <p className="text-xs text-neutral-400 dark:text-neutral-500">Customize your VidGrab experience</p>
+    <div className="space-y-4">
+      {/* Header with Back Button */}
+      <div className="flex items-center gap-2 pt-1 pb-1">
+        <button
+          onClick={() => setActiveTab('home')}
+          className="p-2 -ml-2 rounded-full text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/10 transition-colors"
+          aria-label="Back to Home"
+        >
+          <ArrowLeft size={20} />
+        </button>
+        <h1 className="text-lg font-bold text-[var(--vg-text-primary)]">Settings</h1>
       </div>
 
-      {/* Appearance */}
-      <Section title="Appearance">
-        <div className="p-4 space-y-3">
-          <p className="text-xs font-medium text-neutral-500 dark:text-neutral-400 uppercase tracking-wide">Theme</p>
-          <div className="flex gap-2">
-            {themes.map(({ id, label, icon: Icon }) => (
-              <button
-                key={id}
-                onClick={() => updateSettings({ theme: id })}
-                className={`flex-1 flex flex-col items-center gap-1.5 py-3 rounded-2xl border text-xs font-medium transition-all ${
-                  settings.theme === id
-                    ? 'border-violet-500 bg-violet-50 dark:bg-violet-900/20 text-violet-600 dark:text-violet-400'
-                    : 'border-neutral-200 dark:border-neutral-700 text-neutral-500 dark:text-neutral-400 hover:border-violet-300'
-                }`}
-              >
-                <Icon className="w-5 h-5" />
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* Data & Privacy */}
-      <Section title="Data & Privacy">
-        <SettingRow
-          icon={<Trash2 className="w-4 h-4 text-red-500" />}
-          label="Clear Download History"
-          description="Remove all history entries from this device"
-          onClick={handleClearHistory}
-          danger
-          trailingContent={
-            historyCleared ? (
-              <CheckCircle2 className="w-4 h-4 text-green-500" />
-            ) : (
-              <ChevronRight className="w-4 h-4 text-neutral-400" />
-            )
-          }
+      {/* Main Settings List Card matching Design 2 */}
+      <div
+        className="rounded-3xl border divide-y overflow-hidden shadow-sm transition-all"
+        style={{
+          backgroundColor: 'var(--vg-card)',
+          borderColor: 'var(--vg-border)',
+        }}
+      >
+        {/* 1. Theme */}
+        <SettingsRow
+          icon={<Sun size={19} className="text-amber-500" />}
+          label="Theme"
+          value={themeDisplay}
+          onClick={() => setShowThemeModal(true)}
         />
-        {clearError && (
-          <div className="mx-4 mb-3 flex items-center gap-1.5 text-xs text-red-500">
-            <AlertCircle className="w-3.5 h-3.5" />
-            {clearError}
-          </div>
-        )}
-      </Section>
 
-      {/* About */}
-      <Section title="About">
-        <div className="p-4 space-y-4">
-          <div className="flex items-center gap-3">
-            <Logo size="sm" showText={true} />
-          </div>
-          <div className="space-y-1 text-xs text-neutral-500 dark:text-neutral-400">
-            <InfoRow label="Version" value="1.0.0" />
-            <InfoRow label="Backend" value={backendOnline ? '🟢 Running' : '🔴 Offline'} />
-            <InfoRow label="Backend URL" value={process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'} mono />
-          </div>
-        </div>
-      </Section>
+        {/* 2. Language */}
+        <SettingsRow
+          icon={<Globe size={19} className="text-blue-500" />}
+          label="Language"
+          value="English"
+          onClick={() => alert('Language: English (US) is currently active.')}
+        />
 
-      {/* Supported Sources */}
-      <Section title="Supported Sources">
-        <div className="divide-y divide-neutral-100 dark:divide-neutral-700">
-          {[
-            { name: 'YouTube', desc: 'Videos, Shorts, and Audio (MP4/M4A)' },
-            { name: 'Instagram', desc: 'Reels and public video posts' },
-            { name: 'Twitter / X', desc: 'Videos and GIFs from tweets' },
-            { name: 'TikTok', desc: 'HD video downloads without watermark' },
-            { name: 'Facebook', desc: 'Public videos and reels' },
-            { name: 'Direct Video Files', desc: 'MP4, WebM, MOV, AVI, MKV URLs' },
-            { name: 'HLS Streams', desc: '.m3u8 playlists and adaptive streams' },
-            { name: 'Vimeo (Public)', desc: 'Public videos without DRM protection' },
-          ].map(src => (
-            <div key={src.name} className="flex items-start gap-3 px-4 py-3">
-              <div className="w-2 h-2 rounded-full bg-green-500 mt-1.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-neutral-800 dark:text-white">{src.name}</p>
-                <p className="text-xs text-neutral-500 dark:text-neutral-400 mt-0.5">{src.desc}</p>
-              </div>
-            </div>
-          ))}
-          {[
-            { name: 'Netflix / Disney+ / Hulu', reason: 'DRM-protected content (Widevine)' },
-            { name: 'Amazon Prime Video', reason: 'DRM-protected content' },
-          ].map(src => (
-            <div key={src.name} className="flex items-start gap-3 px-4 py-3">
-              <div className="w-2 h-2 rounded-full bg-neutral-300 dark:bg-neutral-600 mt-1.5 flex-shrink-0" />
-              <div>
-                <p className="text-sm font-medium text-neutral-500 dark:text-neutral-400">{src.name}</p>
-                <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{src.reason}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </Section>
+        {/* 3. Auto Download */}
+        <SettingsRow
+          icon={<Download size={19} className="text-emerald-500" />}
+          label="Auto Download"
+          value="Ask Every Time"
+          onClick={() => alert('Auto Download: Configured to save file to browser download location.')}
+        />
 
-      {/* Legal */}
-      <Section title="Legal & Privacy">
-        <div className="px-4 py-3 space-y-2">
-          <div className="flex items-start gap-2">
-            <Shield className="w-4 h-4 text-violet-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              VidGrab only downloads content you have the right to download. It does not bypass DRM, paywalls, or authentication. All processing runs locally on your device.
-            </p>
-          </div>
-          <div className="flex items-start gap-2">
-            <Info className="w-4 h-4 text-blue-500 flex-shrink-0 mt-0.5" />
-            <p className="text-xs text-neutral-500 dark:text-neutral-400 leading-relaxed">
-              No data is sent to external servers. Your download history is stored only in this browser&apos;s local storage.
-            </p>
-          </div>
-        </div>
-      </Section>
+        {/* 4. Supported Sites */}
+        <SettingsRow
+          icon={<HelpCircle size={19} className="text-purple-500" />}
+          label="Supported Sites"
+          onClick={() => setShowSitesModal(true)}
+        />
 
-      <div className="pb-4" />
-    </div>
-  );
-}
+        {/* 5. Clear History */}
+        <SettingsRow
+          icon={<Trash2 size={19} className="text-rose-500" />}
+          label="Clear History"
+          value={historyCleared ? 'Cleared!' : undefined}
+          danger={historyCleared}
+          onClick={handleClearHistory}
+        />
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
-  return (
-    <div className="bg-white dark:bg-neutral-800 rounded-2xl border border-neutral-100 dark:border-neutral-700 overflow-hidden">
-      <div className="px-4 pt-3.5 pb-1">
-        <h2 className="text-xs font-semibold text-neutral-400 dark:text-neutral-500 uppercase tracking-widest">{title}</h2>
+        {/* 6. Privacy Policy */}
+        <SettingsRow
+          icon={<Shield size={19} className="text-indigo-500" />}
+          label="Privacy Policy"
+          onClick={() => setShowPrivacyModal(true)}
+        />
+
+        {/* 7. About */}
+        <SettingsRow
+          icon={<Info size={19} className="text-cyan-500" />}
+          label="About"
+          value="v1.0.0"
+          onClick={() => setShowAboutModal(true)}
+        />
       </div>
-      {children}
+
+      {/* Backend Engine Status Pill */}
+      <div
+        className="rounded-2xl border p-3 flex items-center justify-between text-xs"
+        style={{
+          backgroundColor: 'var(--vg-card)',
+          borderColor: 'var(--vg-border)',
+        }}
+      >
+        <span className="font-semibold text-[var(--vg-text-secondary)]">Backend Engine</span>
+        <div className="flex items-center gap-1.5 font-bold">
+          <span className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+          <span className={backendOnline ? 'text-emerald-500' : 'text-rose-500'}>
+            {backendOnline ? 'Connected' : 'Offline'}
+          </span>
+        </div>
+      </div>
+
+      {/* Theme Selection Modal */}
+      {showThemeModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+          <div
+            className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            style={{
+              backgroundColor: 'var(--vg-card)',
+              borderColor: 'var(--vg-border)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[16px] text-[var(--vg-text-primary)]">Select Theme</h3>
+              <button
+                onClick={() => setShowThemeModal(false)}
+                className="p-1 rounded-full text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              {[
+                { id: 'dark' as Theme, label: 'Dark Mode (Recommended)', icon: Moon },
+                { id: 'light' as Theme, label: 'Light Mode', icon: Sun },
+                { id: 'system' as Theme, label: 'System Default', icon: Monitor },
+              ].map(({ id, label, icon: Icon }) => (
+                <button
+                  key={id}
+                  onClick={() => {
+                    updateSettings({ theme: id });
+                    setShowThemeModal(false);
+                  }}
+                  className={`
+                    w-full flex items-center justify-between p-3.5 rounded-2xl border text-sm font-semibold transition-all
+                    ${
+                      settings.theme === id
+                        ? 'border-[#563BFF] bg-[#563BFF]/10 text-[#563BFF] dark:text-[#00B8FF]'
+                        : 'border-[var(--vg-border)] text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/5'
+                    }
+                  `}
+                >
+                  <div className="flex items-center gap-3">
+                    <Icon size={18} />
+                    <span>{label}</span>
+                  </div>
+                  {settings.theme === id && <Check size={18} strokeWidth={2.5} />}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Supported Sites Modal */}
+      {showSitesModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+          <div
+            className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl max-h-[80vh] overflow-y-auto scrollbar-hide"
+            style={{
+              backgroundColor: 'var(--vg-card)',
+              borderColor: 'var(--vg-border)',
+            }}
+          >
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-[16px] text-[var(--vg-text-primary)]">Supported Sources</h3>
+              <button
+                onClick={() => setShowSitesModal(false)}
+                className="p-1 rounded-full text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="divide-y divide-[var(--vg-border)] text-xs">
+              {[
+                { name: 'YouTube', desc: 'Videos, Shorts, and Audio (MP4 / M4A)' },
+                { name: 'Instagram', desc: 'Reels and public video clips' },
+                { name: 'Twitter / X', desc: 'Videos and GIFs posted in tweets' },
+                { name: 'TikTok', desc: 'Watermark-free video downloads' },
+                { name: 'Facebook', desc: 'Public videos and reels' },
+                { name: 'Vimeo', desc: 'Public Vimeo HD videos' },
+                { name: 'HLS Streams', desc: 'Adaptive .m3u8 playlists' },
+                { name: 'Direct MP4 / WebM', desc: 'Direct downloadable video file URLs' },
+              ].map(s => (
+                <div key={s.name} className="py-2.5 flex items-start gap-2.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500 mt-1.5 flex-shrink-0" />
+                  <div>
+                    <p className="font-bold text-[var(--vg-text-primary)]">{s.name}</p>
+                    <p className="text-[var(--vg-text-muted)] mt-0.5">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* About Modal */}
+      {showAboutModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+          <div
+            className="w-full max-w-sm rounded-3xl border p-6 space-y-4 shadow-2xl text-center"
+            style={{
+              backgroundColor: 'var(--vg-card)',
+              borderColor: 'var(--vg-border)',
+            }}
+          >
+            <div className="flex justify-center mb-1">
+              <Logo size="lg" showText={true} showSubtitle={true} />
+            </div>
+
+            <p className="text-xs text-[var(--vg-text-secondary)] leading-relaxed">
+              VIDGRAB is a premium high-speed universal media downloader PWA designed for mobile and desktop.
+            </p>
+
+            <div className="rounded-2xl bg-[var(--vg-bg-secondary)] border border-[var(--vg-border)] p-3 text-xs space-y-1 text-left font-mono text-[var(--vg-text-muted)]">
+              <div className="flex justify-between">
+                <span>Version</span>
+                <span className="text-[var(--vg-text-primary)]">1.0.0</span>
+              </div>
+              <div className="flex justify-between">
+                <span>Design Spec</span>
+                <span className="text-[var(--vg-text-primary)]">Design 2</span>
+              </div>
+            </div>
+
+            <button
+              onClick={() => setShowAboutModal(false)}
+              className="w-full py-3 rounded-full gradient-btn text-xs font-bold"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Privacy Policy Modal */}
+      {showPrivacyModal && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+          <div
+            className="w-full max-w-sm rounded-3xl border p-5 space-y-3 shadow-2xl text-xs text-[var(--vg-text-secondary)]"
+            style={{
+              backgroundColor: 'var(--vg-card)',
+              borderColor: 'var(--vg-border)',
+            }}
+          >
+            <div className="flex items-center justify-between pb-1">
+              <h3 className="font-bold text-[15px] text-[var(--vg-text-primary)]">Privacy & Policy</h3>
+              <button onClick={() => setShowPrivacyModal(false)} className="text-[var(--vg-text-muted)]">
+                <X size={18} />
+              </button>
+            </div>
+            <p className="leading-relaxed">
+              VIDGRAB respects your privacy. Videos are delivered directly to your device storage and never stored permanently on our servers.
+            </p>
+            <p className="leading-relaxed">
+              Only download public content that you have rights to view and store offline.
+            </p>
+            <button
+              onClick={() => setShowPrivacyModal(false)}
+              className="w-full py-2.5 rounded-full gradient-btn text-xs font-bold mt-2"
+            >
+              I Understand
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
-function SettingRow({
-  icon, label, description, onClick, danger, trailingContent,
+function SettingsRow({
+  icon, label, value, onClick, danger,
 }: {
   icon: React.ReactNode;
   label: string;
-  description?: string;
-  onClick?: () => void;
+  value?: string;
+  onClick: () => void;
   danger?: boolean;
-  trailingContent?: React.ReactNode;
 }) {
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center gap-3 px-4 py-3 text-left transition-colors ${
-        danger ? 'hover:bg-red-50 dark:hover:bg-red-900/10' : 'hover:bg-neutral-50 dark:hover:bg-neutral-700/50'
-      }`}
+      className="w-full flex items-center justify-between px-4 py-3.5 text-left hover:bg-neutral-500/5 active:bg-neutral-500/10 transition-colors"
+      style={{ borderColor: 'var(--vg-border)' }}
     >
-      <div className="w-8 h-8 rounded-xl bg-neutral-100 dark:bg-neutral-700 flex items-center justify-center flex-shrink-0">
-        {icon}
+      <div className="flex items-center gap-3">
+        <div className="flex items-center justify-center w-7 h-7 flex-shrink-0">
+          {icon}
+        </div>
+        <span className={`text-[14px] font-bold ${danger ? 'text-emerald-500' : 'text-[var(--vg-text-primary)]'}`}>
+          {label}
+        </span>
       </div>
-      <div className="flex-1">
-        <p className={`text-sm font-medium ${danger ? 'text-red-600 dark:text-red-400' : 'text-neutral-800 dark:text-white'}`}>{label}</p>
-        {description && <p className="text-xs text-neutral-400 dark:text-neutral-500 mt-0.5">{description}</p>}
-      </div>
-      {trailingContent}
-    </button>
-  );
-}
 
-function InfoRow({ label, value, mono }: { label: string; value: string; mono?: boolean }) {
-  return (
-    <div className="flex justify-between items-center py-0.5">
-      <span>{label}</span>
-      <span className={`text-neutral-700 dark:text-neutral-300 font-medium ${mono ? 'font-mono text-[10px]' : ''}`}>{value}</span>
-    </div>
+      <div className="flex items-center gap-1.5 text-xs text-[var(--vg-text-muted)] font-semibold">
+        {value && <span className={danger ? 'text-emerald-500' : ''}>{value}</span>}
+        <ChevronRight size={17} className="text-[var(--vg-text-muted)]" />
+      </div>
+    </button>
   );
 }

@@ -1,19 +1,54 @@
 @import "tailwindcss";
 
-/* ── Custom theme tokens ── */
-@theme {
-  --color-brand-50:  #f5f3ff;
-  --color-brand-100: #ede9fe;
-  --color-brand-200: #ddd6fe;
-  --color-brand-300: #c4b5fd;
-  --color-brand-400: #a78bfa;
-  --color-brand-500: #8b5cf6;
-  --color-brand-600: #7c3aed;
-  --color-brand-700: #6d28d9;
-  --color-brand-800: #5b21b6;
-  --color-brand-900: #4c1d95;
+/* ── VIDGRAB Design 2 Color System & Variables ── */
+:root {
+  /* Default Light Mode */
+  --vg-bg: #F7F8FF;
+  --vg-bg-secondary: #F0F2FC;
+  --vg-card: #FFFFFF;
+  --vg-card-elevated: #FFFFFF;
+  --vg-card-hover: #F8F9FE;
+  --vg-border: #E4E7F2;
+  --vg-border-subtle: #ECEEF8;
+  --vg-text-primary: #151525;
+  --vg-text-secondary: #69708A;
+  --vg-text-muted: #8E95AF;
+  
+  --vg-gradient-start: #00A8F0;
+  --vg-gradient-mid: #593BFF;
+  --vg-gradient-end: #D72BDF;
+  
+  --vg-dock-bg: rgba(255, 255, 255, 0.92);
+  --vg-dock-border: rgba(228, 231, 242, 0.8);
+  --vg-dock-shadow: 0 10px 30px rgba(89, 59, 255, 0.08);
 
-  --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+  --vg-input-bg: #FFFFFF;
+  --vg-input-border: #E4E7F2;
+}
+
+.dark {
+  /* Dark Mode - Design 2 Spec */
+  --vg-bg: #070810;
+  --vg-bg-secondary: #0D1020;
+  --vg-card: #141728;
+  --vg-card-elevated: #191D31;
+  --vg-card-hover: #1E233B;
+  --vg-border: #262B40;
+  --vg-border-subtle: #1B1F34;
+  --vg-text-primary: #FFFFFF;
+  --vg-text-secondary: #A4A8BD;
+  --vg-text-muted: #646982;
+  
+  --vg-gradient-start: #00B8FF;
+  --vg-gradient-mid: #563BFF;
+  --vg-gradient-end: #DB20E8;
+  
+  --vg-dock-bg: rgba(20, 23, 40, 0.92);
+  --vg-dock-border: rgba(38, 43, 64, 0.8);
+  --vg-dock-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+
+  --vg-input-bg: #0D1020;
+  --vg-input-border: #262B40;
 }
 
 /* ── Base resets ── */
@@ -29,26 +64,27 @@ html {
 }
 
 body {
+  background-color: var(--vg-bg);
+  color: var(--vg-text-primary);
   overscroll-behavior: none;
   overflow-x: hidden;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
-/* ── Safe area ── */
+/* ── Safe area & Layout ── */
 .safe-area-pb {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 8px);
+  padding-bottom: max(env(safe-area-inset-bottom, 0px), 12px);
 }
 
-/* ── Scrollbar hide ── */
+.safe-area-pt {
+  padding-top: max(env(safe-area-inset-top, 0px), 12px);
+}
+
+/* ── Scrollbars ── */
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* ── Line clamp ── */
-.line-clamp-2 {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
 .line-clamp-1 {
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -56,14 +92,57 @@ body {
   overflow: hidden;
 }
 
-/* ── Touch feedback ── */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* ── Primary Gradient Utilities ── */
+.gradient-bg {
+  background: linear-gradient(135deg, var(--vg-gradient-start) 0%, var(--vg-gradient-mid) 50%, var(--vg-gradient-end) 100%);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, var(--vg-gradient-start) 0%, var(--vg-gradient-mid) 50%, var(--vg-gradient-end) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-btn {
+  background: linear-gradient(135deg, var(--vg-gradient-start) 0%, var(--vg-gradient-mid) 50%, var(--vg-gradient-end) 100%);
+  color: #FFFFFF;
+  font-weight: 700;
+  box-shadow: 0 8px 24px -4px rgba(86, 59, 255, 0.45);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gradient-btn:hover {
+  filter: brightness(1.08);
+  box-shadow: 0 10px 28px -2px rgba(86, 59, 255, 0.6);
+  transform: translateY(-1px);
+}
+
+.gradient-btn:active {
+  transform: scale(0.98);
+  filter: brightness(0.95);
+}
+
+.gradient-glow {
+  box-shadow: 0 0 35px -5px rgba(86, 59, 255, 0.5);
+}
+
+/* ── Touch Feedback ── */
 button { cursor: pointer; }
-button:active { opacity: 0.85; }
 
 /* ── Smooth transitions ── */
-* { transition-property: color, background-color, border-color, opacity, transform, box-shadow;
-    transition-duration: 150ms;
-    transition-timing-function: ease; }
+* {
+  transition-property: color, background-color, border-color, box-shadow;
+  transition-duration: 150ms;
+  transition-timing-function: ease;
+}
 
-/* ── Disable transition on specific exceptions ── */
-.no-transition, .no-transition * { transition: none !important; }
+.no-transition, .no-transition * {
+  transition: none !important;
+}
