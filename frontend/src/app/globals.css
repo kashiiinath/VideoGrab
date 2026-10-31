@@ -146,3 +146,11 @@ button { cursor: pointer; }
 .no-transition, .no-transition * {
   transition: none !important;
 }
+
+
+/* ── Splash Screen Progress Bar Animation ── */
+@keyframes progress {
+  0% { width: 0%; margin-left: 0%; }
+  50% { width: 70%; margin-left: 15%; }
+  100% { width: 0%; margin-left: 100%; }
+}

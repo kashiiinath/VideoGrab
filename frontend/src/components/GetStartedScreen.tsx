@@ -1,13 +1,44 @@
 'use client';
 
-import React from 'react';
-import { ArrowRight, Zap, Film, ShieldCheck } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { ArrowRight, Zap, Film, ShieldCheck, Download, X } from 'lucide-react';
 
 interface GetStartedScreenProps {
   onStart: () => void;
 }
 
 export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
+  const [showInstallPopup, setShowInstallPopup] = useState(false);
+
+  useEffect(() => {
+    // Show pop up message shortly after GetStartedScreen appears
+    const timer = setTimeout(() => {
+      setShowInstallPopup(true);
+    }, 600);
+    return () => clearTimeout(timer);
+  }, []);
+
+  async function handleDownloadApp() {
+    if (typeof window !== 'undefined' && window.__pwaInstallPrompt) {
+      try {
+        window.__pwaInstallPrompt.prompt();
+        const choice = await window.__pwaInstallPrompt.userChoice;
+        if (choice && choice.outcome === 'accepted') {
+          setShowInstallPopup(false);
+          return;
+        }
+      } catch {}
+    }
+    // Fallback instructions if native prompt is not active or already installed
+    alert(
+      'To install VIDGRAB:\n\n' +
+      '• Android / Chrome: Tap the top-right menu (3 dots) → "Install app" or "Add to Home screen"\n' +
+      '• iPhone / Safari: Tap the Share button at the bottom → "Add to Home Screen"\n' +
+      '• Desktop Chrome: Click the install icon in the address bar'
+    );
+    setShowInstallPopup(false);
+  }
+
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col justify-between p-6 overflow-hidden transition-all duration-500"
@@ -92,6 +123,66 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
           By continuing, you agree to public media download policies.
         </p>
       </div>
+
+      {/* Pop-up Message Modal: For better performance download the app */}
+      {showInstallPopup && (
+        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
+          <div className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl relative bg-white/95 dark:bg-[#141728]/95 backdrop-blur-2xl border-black/[0.08] dark:border-white/[0.1] animate-in slide-in-from-bottom-6 duration-300">
+            {/* Close Button */}
+            <button
+              onClick={() => setShowInstallPopup(false)}
+              className="absolute top-4 right-4 p-1.5 rounded-full text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/10 transition-colors"
+              aria-label="Close"
+            >
+              <X size={18} />
+            </button>
+
+            {/* Icon & Title Header */}
+            <div className="flex items-center gap-3 pr-6">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00B8FF]/20 to-[#DB20E8]/20 border border-[var(--vg-border)] flex items-center justify-center flex-shrink-0 shadow-sm">
+                <img
+                  src="/logo/vidgrab-logo-icon.png"
+                  alt="VIDGRAB"
+                  width={36}
+                  height={36}
+                  className="w-8 h-8 object-contain"
+                />
+              </div>
+              <div>
+                <h4 className="font-extrabold text-sm text-[var(--vg-text-primary)]">
+                  Download VIDGRAB App
+                </h4>
+                <p className="text-[11px] font-semibold text-[#00B8FF]">
+                  Official PWA Available
+                </p>
+              </div>
+            </div>
+
+            {/* Message Body */}
+            <p className="text-xs text-[var(--vg-text-secondary)] leading-relaxed">
+              For better performance, faster downloads, and offline saving, download the app on your device.
+            </p>
+
+            {/* Action Buttons */}
+            <div className="space-y-2 pt-1">
+              <button
+                onClick={handleDownloadApp}
+                className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold gradient-btn shadow-md active:scale-[0.98] transition-all"
+              >
+                <Download size={15} strokeWidth={2.5} />
+                <span>Download App</span>
+              </button>
+
+              <button
+                onClick={() => setShowInstallPopup(false)}
+                className="w-full py-2.5 rounded-full text-xs font-semibold text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] transition-colors text-center"
+              >
+                Continue in Browser
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
