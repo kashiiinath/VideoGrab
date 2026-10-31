@@ -6,7 +6,7 @@ import { clearHistory } from '@/lib/api';
 import Logo from '@/components/Logo';
 import {
   Sun, Moon, Monitor, Trash2, Info, Shield, CheckCircle2,
-  ChevronRight, ArrowLeft, Globe, Download, HelpCircle, Check, X
+  ChevronRight, ArrowLeft, Globe, Download, HelpCircle, Check, X, Sparkles
 } from 'lucide-react';
 import { Theme } from '@/lib/types';
 
@@ -102,7 +102,18 @@ export default function SettingsScreen() {
           onClick={() => setShowPrivacyModal(true)}
         />
 
-        {/* 7. About */}
+        {/* 7. Replay Welcome Screen */}
+        <SettingsRow
+          icon={<Sparkles size={19} className="text-[#DB20E8]" />}
+          label="Welcome / Get Started"
+          value="Replay"
+          onClick={() => {
+            try { sessionStorage.removeItem('vidgrab_started'); } catch {}
+            window.location.reload();
+          }}
+        />
+
+        {/* 8. About */}
         <SettingsRow
           icon={<Info size={19} className="text-cyan-500" />}
           label="About"

@@ -1,14 +1,49 @@
 'use client';
 
+import React, { useState, useEffect } from 'react';
 import { AppProvider, useApp } from '@/context/AppContext';
 import BottomNav from '@/components/BottomNav';
 import HomeScreen from '@/screens/HomeScreen';
 import DownloadsScreen from '@/screens/DownloadsScreen';
 import HistoryScreen from '@/screens/HistoryScreen';
 import SettingsScreen from '@/screens/SettingsScreen';
+import GetStartedScreen from '@/components/GetStartedScreen';
 
 function AppShell() {
   const { activeTab } = useApp();
+  const [hasStarted, setHasStarted] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    try {
+      const started = sessionStorage.getItem('vidgrab_started');
+      setHasStarted(started === 'true');
+    } catch {
+      setHasStarted(false);
+    }
+  }, []);
+
+  function handleStart() {
+    try {
+      sessionStorage.setItem('vidgrab_started', 'true');
+    } catch {}
+    setHasStarted(true);
+  }
+
+  // Prevent flash while checking sessionStorage
+  if (hasStarted === null) {
+    return (
+      <div
+        className="min-h-screen flex items-center justify-center"
+        style={{ backgroundColor: 'var(--vg-bg)' }}
+      >
+        <div className="w-10 h-10 rounded-full border-2 border-[#563BFF] border-t-transparent animate-spin" />
+      </div>
+    );
+  }
+
+  if (!hasStarted) {
+    return <GetStartedScreen onStart={handleStart} />;
+  }
 
   return (
     <div
