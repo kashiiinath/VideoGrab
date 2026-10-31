@@ -1,7 +1,7 @@
 {
   "name": "VIDGRAB – Universal Video Downloader",
   "short_name": "VIDGRAB",
-  "description": "Fast, simple, powerful video downloader for YouTube, Instagram, X, TikTok, Facebook and more.",
+  "description": "Fast, simple, powerful video downloader for YouTube, Instagram, X, Facebook and more.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#070810",

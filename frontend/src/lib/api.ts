@@ -23,7 +23,8 @@ export async function getSupportedSources(): Promise<SupportedSource[]> {
   }
   try {
     const res = await api.get('/analyze/sources');
-    _cachedSources = res.data.data as SupportedSource[];
+    const raw = res.data.data as SupportedSource[];
+    _cachedSources = (raw || []).filter(s => !s.name.toLowerCase().includes('tiktok'));
     return _cachedSources;
   } catch {
     if (_cachedSources) return _cachedSources;
@@ -31,7 +32,6 @@ export async function getSupportedSources(): Promise<SupportedSource[]> {
       { name: 'YouTube', description: 'Videos & Audio', examples: [] },
       { name: 'Instagram', description: 'Reels & Clips', examples: [] },
       { name: 'Twitter / X', description: 'Video Tweets', examples: [] },
-      { name: 'TikTok', description: 'HD Videos', examples: [] },
       { name: 'Facebook', description: 'Public Videos', examples: [] },
       { name: 'Vimeo', description: 'Public Videos', examples: [] },
     ];

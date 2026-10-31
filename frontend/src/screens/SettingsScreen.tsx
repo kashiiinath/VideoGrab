@@ -6,7 +6,7 @@ import { clearHistory } from '@/lib/api';
 import Logo from '@/components/Logo';
 import {
   Sun, Moon, Monitor, Trash2, Info, Shield, CheckCircle2,
-  ChevronRight, ArrowLeft, Globe, Download, HelpCircle, Check, X, Sparkles
+  ChevronRight, ArrowLeft, HelpCircle, Check, X
 } from 'lucide-react';
 import { Theme } from '@/lib/types';
 
@@ -63,30 +63,14 @@ export default function SettingsScreen() {
           onClick={() => setShowThemeModal(true)}
         />
 
-        {/* 2. Language */}
-        <SettingsRow
-          icon={<Globe size={19} className="text-blue-500" />}
-          label="Language"
-          value="English"
-          onClick={() => alert('Language: English (US) is currently active.')}
-        />
-
-        {/* 3. Auto Download */}
-        <SettingsRow
-          icon={<Download size={19} className="text-emerald-500" />}
-          label="Auto Download"
-          value="Ask Every Time"
-          onClick={() => alert('Auto Download: Configured to save file to browser download location.')}
-        />
-
-        {/* 4. Supported Sites */}
+        {/* 2. Supported Sites */}
         <SettingsRow
           icon={<HelpCircle size={19} className="text-purple-500" />}
           label="Supported Sites"
           onClick={() => setShowSitesModal(true)}
         />
 
-        {/* 5. Clear History */}
+        {/* 3. Clear History */}
         <SettingsRow
           icon={<Trash2 size={19} className="text-rose-500" />}
           label="Clear History"
@@ -95,25 +79,14 @@ export default function SettingsScreen() {
           onClick={handleClearHistory}
         />
 
-        {/* 6. Privacy Policy */}
+        {/* 4. Privacy Policy */}
         <SettingsRow
           icon={<Shield size={19} className="text-indigo-500" />}
           label="Privacy Policy"
           onClick={() => setShowPrivacyModal(true)}
         />
 
-        {/* 7. Replay Welcome Screen */}
-        <SettingsRow
-          icon={<Sparkles size={19} className="text-[#DB20E8]" />}
-          label="Welcome / Get Started"
-          value="Replay"
-          onClick={() => {
-            try { sessionStorage.removeItem('vidgrab_started'); } catch {}
-            window.location.reload();
-          }}
-        />
-
-        {/* 8. About */}
+        {/* 5. About */}
         <SettingsRow
           icon={<Info size={19} className="text-cyan-500" />}
           label="About"
@@ -217,7 +190,6 @@ export default function SettingsScreen() {
                 { name: 'YouTube', desc: 'Videos, Shorts, and Audio (MP4 / M4A)' },
                 { name: 'Instagram', desc: 'Reels and public video clips' },
                 { name: 'Twitter / X', desc: 'Videos and GIFs posted in tweets' },
-                { name: 'TikTok', desc: 'Watermark-free video downloads' },
                 { name: 'Facebook', desc: 'Public videos and reels' },
                 { name: 'Vimeo', desc: 'Public Vimeo HD videos' },
                 { name: 'HLS Streams', desc: 'Adaptive .m3u8 playlists' },

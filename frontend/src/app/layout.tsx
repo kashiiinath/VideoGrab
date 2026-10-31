@@ -4,7 +4,7 @@ import PwaInit from '@/components/PwaInit';
 
 export const metadata: Metadata = {
   title: 'VIDGRAB – Universal Video Downloader',
-  description: 'Download any video, instantly. Fast, simple, powerful video downloader for YouTube, Instagram, X, TikTok, Facebook and more.',
+  description: 'Download any video, instantly. Fast, simple, powerful video downloader for YouTube, Instagram, X, Facebook and more.',
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,
