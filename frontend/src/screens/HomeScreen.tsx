@@ -128,8 +128,10 @@ export default function HomeScreen() {
         </div>
       )}
 
-      {/* 2. Hero URL Input Section */}
-      <UrlInput onAnalyze={handleAnalyze} loading={loading} error={error} />
+      {/* Main Content Area - Arranged lower with comfortable breathing room */}
+      <div className="space-y-6 pt-3 sm:pt-6">
+        {/* 2. Hero URL Input Section */}
+        <UrlInput onAnalyze={handleAnalyze} loading={loading} error={error} />
 
       {/* 3. Video Preview Screen (when analyzed) OR Home Content */}
       {analyzedVideo ? (
@@ -238,6 +240,7 @@ export default function HomeScreen() {
           </div>
         </>
       )}
+      </div>
     </div>
   );
 }
