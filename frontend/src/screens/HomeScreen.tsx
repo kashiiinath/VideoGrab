@@ -8,7 +8,7 @@ import UrlInput from '@/components/UrlInput';
 import VideoCard from '@/components/VideoCard';
 import { SupportedSource } from '@/lib/types';
 import {
-  Settings as SettingsIcon, Play, CheckCircle2, Clock, MoreVertical,
+  Play, CheckCircle2, Clock, MoreVertical,
   AlertCircle, WifiOff
 } from 'lucide-react';
 
@@ -92,37 +92,26 @@ export default function HomeScreen() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Glassmorphic Top Header with Logo, Online/Offline Status, Settings Shortcut */}
-      <div className="sticky top-0 z-30 -mx-1 px-3.5 py-2.5 rounded-3xl bg-[var(--vg-card)]/75 dark:bg-[#141728]/75 backdrop-blur-xl border border-[var(--vg-border)]/70 shadow-[0_8px_30px_rgb(0,0,0,0.15)] flex items-center justify-between transition-all">
+      {/* 1. Glassmorphic Top Header with Logo & Dynamic Online/Offline Status */}
+      <div className="sticky top-0 z-30 -mx-1 px-3.5 py-2.5 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex items-center justify-between transition-all">
         <Logo size="md" showText={true} showSubtitle={true} />
 
-        <div className="flex items-center gap-2">
-          {/* Online / Offline Status Badge */}
-          <div
-            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold tracking-wide select-none transition-all shadow-sm ${
+        {/* Online / Offline Status Badge */}
+        <div
+          className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold tracking-wide select-none transition-all shadow-sm ${
+            backendOnline
+              ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
+              : 'bg-rose-500/10 border-rose-500/25 text-rose-600 dark:text-rose-400'
+          }`}
+        >
+          <span
+            className={`w-2 h-2 rounded-full ${
               backendOnline
-                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
-                : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+                ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse'
+                : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]'
             }`}
-          >
-            <span
-              className={`w-2 h-2 rounded-full ${
-                backendOnline
-                  ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'
-                  : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
-              }`}
-            />
-            <span>{backendOnline ? 'Online' : 'Offline'}</span>
-          </div>
-
-          {/* Settings Shortcut Button */}
-          <button
-            onClick={() => setActiveTab('settings')}
-            className="w-9 h-9 rounded-full flex items-center justify-center border border-[var(--vg-border)] text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:border-[#563BFF]/40 bg-[var(--vg-card)]/80 hover:bg-[var(--vg-card)] transition-all shadow-sm"
-            aria-label="Settings"
-          >
-            <SettingsIcon size={17} />
-          </button>
+          />
+          <span>{backendOnline ? 'Online' : 'Offline'}</span>
         </div>
       </div>
 
