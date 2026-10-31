@@ -1,4 +1,4 @@
-import { spawn } from 'child_process';
+import { spawn, execSync } from 'child_process';
 import path from 'path';
 import fs from 'fs';
 import os from 'os';
@@ -12,42 +12,104 @@ try {
   // ffmpeg-static not installed — yt-dlp will try system ffmpeg
 }
 
+/**
+ * Resolve a command name to its full path on the system.
+ * Works on both Windows and Linux. Returns null if not found.
+ */
+function resolveCommand(cmd: string): string | null {
+  try {
+    if (process.platform === 'win32') {
+      const result = execSync(`where ${cmd}`, { encoding: 'utf-8', timeout: 5000 }).trim();
+      return result.split('\n')[0].trim() || null;
+    } else {
+      const result = execSync(`which ${cmd}`, { encoding: 'utf-8', timeout: 5000 }).trim();
+      return result || null;
+    }
+  } catch {
+    return null;
+  }
+}
+
+// Cache resolved paths to avoid calling which/where repeatedly
+let _ytdlpPath: string | null = null;
+let _ffmpegPath: string | null = null;
+let _nodePath: string | null = null;
+let _ytdlpAvailable: boolean | null = null;
+
 export function getYtDlpPath(): string {
+  if (_ytdlpPath) return _ytdlpPath;
+
   if (process.platform === 'win32') {
+    // Check local bin directories first (for development)
     const localBin = path.join(process.cwd(), 'bin', 'yt-dlp.exe');
-    if (fs.existsSync(localBin)) return localBin;
+    if (fs.existsSync(localBin)) { _ytdlpPath = localBin; return localBin; }
 
     const backendBin = path.join('D:', 'VideoDownloader', 'backend', 'bin', 'yt-dlp.exe');
-    if (fs.existsSync(backendBin)) return backendBin;
+    if (fs.existsSync(backendBin)) { _ytdlpPath = backendBin; return backendBin; }
 
     const uvBin = 'C:\\Users\\Hp\\AppData\\Roaming\\uv\\python\\cpython-3.12-windows-x86_64-none\\Scripts\\yt-dlp.exe';
-    if (fs.existsSync(uvBin)) return uvBin;
+    if (fs.existsSync(uvBin)) { _ytdlpPath = uvBin; return uvBin; }
+  } else {
+    // Linux/Docker: check common paths
+    const commonPaths = ['/usr/local/bin/yt-dlp', '/usr/bin/yt-dlp'];
+    for (const p of commonPaths) {
+      if (fs.existsSync(p)) { _ytdlpPath = p; return p; }
+    }
   }
 
+  // Fallback: resolve via PATH
+  const resolved = resolveCommand('yt-dlp');
+  if (resolved) { _ytdlpPath = resolved; return resolved; }
+
+  // Last resort: return bare command name (spawn will search PATH)
   return 'yt-dlp';
 }
 
-function getNodePath(): string {
+function getNodePath(): string | null {
+  if (_nodePath !== null) return _nodePath || null;
+
   if (process.platform === 'win32') {
     const winPath = 'C:\\Program Files\\nodejs\\node.exe';
-    if (fs.existsSync(winPath)) return winPath;
+    if (fs.existsSync(winPath)) { _nodePath = winPath; return winPath; }
+  } else {
+    // Linux/Docker: check common paths
+    const commonPaths = ['/usr/local/bin/node', '/usr/bin/node'];
+    for (const p of commonPaths) {
+      if (fs.existsSync(p)) { _nodePath = p; return p; }
+    }
   }
-  return 'node';
+
+  const resolved = resolveCommand('node');
+  if (resolved) { _nodePath = resolved; return resolved; }
+
+  _nodePath = '';
+  return null;
 }
 
 function getFfmpegPath(): string | null {
+  if (_ffmpegPath !== null) return _ffmpegPath || null;
+
   if (process.platform === 'win32') {
     const localBin = path.join(process.cwd(), 'bin', 'ffmpeg.exe');
-    if (fs.existsSync(localBin)) return localBin;
+    if (fs.existsSync(localBin)) { _ffmpegPath = localBin; return localBin; }
 
     const backendBin = path.join('D:', 'VideoDownloader', 'backend', 'bin', 'ffmpeg.exe');
-    if (fs.existsSync(backendBin)) return backendBin;
+    if (fs.existsSync(backendBin)) { _ffmpegPath = backendBin; return backendBin; }
 
-    if (ffmpegPath && fs.existsSync(ffmpegPath)) return ffmpegPath;
-    return null;
+    if (ffmpegPath && fs.existsSync(ffmpegPath)) { _ffmpegPath = ffmpegPath; return ffmpegPath; }
+  } else {
+    // Linux/Docker: check common paths
+    const commonPaths = ['/usr/bin/ffmpeg', '/usr/local/bin/ffmpeg'];
+    for (const p of commonPaths) {
+      if (fs.existsSync(p)) { _ffmpegPath = p; return p; }
+    }
   }
 
-  return 'ffmpeg';
+  const resolved = resolveCommand('ffmpeg');
+  if (resolved) { _ffmpegPath = resolved; return resolved; }
+
+  _ffmpegPath = '';
+  return null;
 }
 
 function getBaseArgs(): string[] {
@@ -59,6 +121,7 @@ function getBaseArgs(): string[] {
     '--no-cache-dir',
   ];
 
+  // Tell yt-dlp where node.js is (for JS-based extractors)
   const node = getNodePath();
   if (node) {
     args.push('--js-runtimes', `node:${node}`);
@@ -74,8 +137,21 @@ function getBaseArgs(): string[] {
 }
 
 export function isYtDlpAvailable(): boolean {
+  if (_ytdlpAvailable !== null) return _ytdlpAvailable;
+
   const p = getYtDlpPath();
-  return fs.existsSync(p);
+
+  // If it's an absolute path, check file exists
+  if (path.isAbsolute(p)) {
+    _ytdlpAvailable = fs.existsSync(p);
+  } else {
+    // It's a bare command name — try to resolve it via PATH
+    const resolved = resolveCommand(p);
+    _ytdlpAvailable = resolved !== null;
+  }
+
+  console.log(`[yt-dlp] Available: ${_ytdlpAvailable}, Path: ${p}`);
+  return _ytdlpAvailable;
 }
 
 export interface YtDlpFormat {
@@ -119,12 +195,14 @@ export async function getYtDlpMetadata(url: string): Promise<YtDlpInfo> {
       url,
     ];
 
+    console.log(`[yt-dlp] Analyzing: ${url}`);
+    console.log(`[yt-dlp] Binary: ${binary}`);
     const child = spawn(binary, args);
-    // Kill if it takes more than 60 seconds
+    // Kill if it takes more than 90 seconds (Render cold start needs time)
     const killTimer = setTimeout(() => {
       child.kill('SIGKILL');
       reject(new Error('Video analysis timed out. Please try again.'));
-    }, 60000);
+    }, 90000);
 
     let stdout = '';
     let stderr = '';
@@ -134,31 +212,42 @@ export async function getYtDlpMetadata(url: string): Promise<YtDlpInfo> {
     });
 
     child.stderr.on('data', (chunk) => {
-      stderr += chunk.toString();
+      const msg = chunk.toString();
+      stderr += msg;
+      // Log important stderr messages
+      if (!msg.includes('[download]') && !msg.includes('WARNING')) {
+        console.log(`[yt-dlp stderr] ${msg.trim()}`);
+      }
     });
 
     child.on('error', (err) => {
       clearTimeout(killTimer);
+      console.error(`[yt-dlp] Spawn error: ${err.message}`);
       reject(new Error(`Failed to execute yt-dlp: ${err.message}`));
     });
 
     child.on('close', (code) => {
       clearTimeout(killTimer);
+      console.log(`[yt-dlp] Analyze exited with code: ${code}`);
       if (code === 0 && stdout.trim()) {
         try {
           const parsed = JSON.parse(stdout);
+          console.log(`[yt-dlp] Parsed metadata: title="${parsed.title}", formats=${parsed.formats?.length || 0}`);
           resolve(parsed);
         } catch (e: any) {
           reject(new Error(`Failed to parse metadata: ${e.message}`));
         }
       } else {
         const err = stderr.trim();
+        console.error(`[yt-dlp] Analysis failed. stderr: ${err.substring(0, 500)}`);
         if (err.includes('Sign in to confirm')) {
           reject(new Error('This video requires authentication or age verification.'));
         } else if (err.includes('Private video') || err.includes('Video unavailable')) {
           reject(new Error('Video is private or unavailable on YouTube.'));
+        } else if (err.includes('login') || err.includes('Login')) {
+          reject(new Error('This content requires login to access. Try a different video.'));
         } else {
-          reject(new Error(err.split('\n')[0] || `yt-dlp exited with code ${code}`));
+          reject(new Error(err.split('\n').pop() || `yt-dlp exited with code ${code}`));
         }
       }
     });
@@ -168,11 +257,6 @@ export async function getYtDlpMetadata(url: string): Promise<YtDlpInfo> {
 /**
  * Download a video using yt-dlp with the specified format.
  * Returns the path to the downloaded file.
- *
- * @param videoUrl - The URL of the video to download
- * @param formatSpec - yt-dlp format specifier (e.g., "bestvideo[height<=720]+bestaudio/best[height<=720]")
- * @param outputFilename - Desired output filename (without extension, yt-dlp will add it)
- * @returns Path to the downloaded file
  */
 export async function downloadWithYtDlp(
   videoUrl: string,
@@ -206,6 +290,7 @@ export async function downloadWithYtDlp(
     ];
 
     console.log(`[yt-dlp] Downloading: ${videoUrl} with format: ${formatSpec}`);
+    console.log(`[yt-dlp] Output template: ${outputTemplate}`);
     const child = spawn(binary, args);
 
     // Kill if download takes more than 5 minutes
@@ -216,38 +301,59 @@ export async function downloadWithYtDlp(
 
     let stderr = '';
 
+    child.stdout.on('data', (chunk) => {
+      const msg = chunk.toString();
+      if (msg.includes('[download]') || msg.includes('[Merger]')) {
+        process.stdout.write(msg);
+      }
+    });
+
     child.stderr.on('data', (chunk) => {
       const msg = chunk.toString();
       stderr += msg;
       // Log progress lines
-      if (msg.includes('[download]')) {
+      if (msg.includes('[download]') || msg.includes('[Merger]')) {
         process.stdout.write(msg);
+      } else {
+        console.log(`[yt-dlp download stderr] ${msg.trim()}`);
       }
     });
 
     child.on('error', (err) => {
       clearTimeout(killTimer);
+      console.error(`[yt-dlp] Download spawn error: ${err.message}`);
       reject(new Error(`Failed to execute yt-dlp: ${err.message}`));
     });
 
     child.on('close', (code) => {
       clearTimeout(killTimer);
+      console.log(`[yt-dlp] Download exited with code: ${code}`);
 
       if (code !== 0) {
         const errMsg = stderr.trim().split('\n').pop() || `yt-dlp exited with code ${code}`;
+        console.error(`[yt-dlp] Download failed: ${errMsg}`);
         reject(new Error(errMsg));
         return;
       }
 
       // Find all files created for this download job
-      const allFiles = fs.readdirSync(tmpDir)
-        .filter(f => f.startsWith(fileId))
-        .map(f => ({
-          name: f,
-          path: path.join(tmpDir, f),
-          time: fs.statSync(path.join(tmpDir, f)).mtimeMs,
-        }))
-        .sort((a, b) => b.time - a.time);
+      let allFiles: Array<{ name: string; path: string; time: number }>;
+      try {
+        allFiles = fs.readdirSync(tmpDir)
+          .filter(f => f.startsWith(fileId))
+          .map(f => ({
+            name: f,
+            path: path.join(tmpDir, f),
+            time: fs.statSync(path.join(tmpDir, f)).mtimeMs,
+          }))
+          .sort((a, b) => b.time - a.time);
+      } catch (err: any) {
+        console.error(`[yt-dlp] Error reading tmp dir: ${err.message}`);
+        reject(new Error('Download completed but could not read output directory.'));
+        return;
+      }
+
+      console.log(`[yt-dlp] Found ${allFiles.length} files: ${allFiles.map(f => f.name).join(', ')}`);
 
       if (allFiles.length === 0) {
         reject(new Error('Download completed but output file not found.'));
@@ -265,7 +371,7 @@ export async function downloadWithYtDlp(
         }
       });
 
-      console.log(`[yt-dlp] Downloaded final merged file: ${downloadedFile.path}`);
+      console.log(`[yt-dlp] Downloaded final merged file: ${downloadedFile.path} (${fs.statSync(downloadedFile.path).size} bytes)`);
 
       resolve({
         filePath: downloadedFile.path,

@@ -1,4 +1,5 @@
 import { IProvider, ProviderResult, VideoMetadata, VideoFormat } from './types';
+import { getYtDlpMetadata, isYtDlpAvailable } from '../utils/ytdlp';
 import axios from 'axios';
 
 export class TwitterProvider implements IProvider {
@@ -72,6 +73,66 @@ export class TwitterProvider implements IProvider {
       }
     }
 
+    // Fallback: try yt-dlp for Twitter extraction
+    if (isYtDlpAvailable()) {
+      try {
+        console.log(`[Twitter] API endpoints failed, trying yt-dlp for: ${rawUrl}`);
+        const info = await getYtDlpMetadata(rawUrl);
+        if (info && (info.formats?.length || info.url)) {
+          const title = info.title || `Twitter Video ${statusId}`;
+          const thumbnail = info.thumbnail;
+          const duration = info.duration ? Math.round(info.duration) : undefined;
+
+          const formats: VideoFormat[] = [];
+          const rawFormats = info.formats || [];
+          const videoFormats = rawFormats.filter(f => f.url && f.vcodec !== 'none');
+
+          if (videoFormats.length > 0) {
+            const best = videoFormats[videoFormats.length - 1];
+            formats.push({
+              id: 'twitter_ytdlp_best',
+              label: 'MP4 (Best Quality)',
+              quality: best.height ? `${best.height}p` : 'Original',
+              format: 'mp4',
+              mimeType: 'video/mp4',
+              fileSize: best.filesize || best.filesize_approx,
+              url: best.url!,
+              hasVideo: true,
+              hasAudio: true,
+            });
+          } else {
+            formats.push({
+              id: 'twitter_ytdlp_fallback',
+              label: '⭐ Best Available (MP4)',
+              quality: 'Best',
+              format: 'mp4',
+              mimeType: 'video/mp4',
+              url: `ytdlp:best||${rawUrl}`,
+              hasVideo: true,
+              hasAudio: true,
+            });
+          }
+
+          if (formats.length > 0) {
+            return {
+              success: true,
+              data: {
+                url: rawUrl,
+                title,
+                thumbnail,
+                duration,
+                sourceDomain: 'x.com',
+                provider: this.name,
+                formats,
+              },
+            };
+          }
+        }
+      } catch (err: any) {
+        console.error(`[Twitter] yt-dlp fallback also failed: ${err.message}`);
+      }
+    }
+
     return {
       success: false,
       error: 'Could not extract video from Twitter/X. The tweet might not contain a video, or it is private/deleted.',
@@ -83,4 +144,3 @@ export class TwitterProvider implements IProvider {
     return match ? match[1] : null;
   }
 }
-
