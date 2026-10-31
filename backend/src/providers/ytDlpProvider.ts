@@ -46,7 +46,7 @@ export class YtDlpProvider implements IProvider {
       const heights = [1080, 720, 480, 360];
       const seenHeights = new Set<number>();
 
-      // First check if any direct video+audio mp4 streams exist
+      // Add standard resolution choices using yt-dlp format specs
       for (const h of heights) {
         const matching = rawFormats.filter(f => f.height === h);
         if (matching.length > 0 && !seenHeights.has(h)) {
@@ -54,12 +54,12 @@ export class YtDlpProvider implements IProvider {
           const best = matching.find(f => f.ext === 'mp4') || matching[0];
           formats.push({
             id: `ytdlp_${h}p`,
-            label: `${h}p (MP4)`,
+            label: `${h}p (MP4 Video + Audio)`,
             quality: `${h}p`,
             format: 'mp4',
             mimeType: 'video/mp4',
             fileSize: best.filesize || best.filesize_approx,
-            url: `ytdlp://${encodeURIComponent(rawUrl)}?height=${h}`,
+            url: `ytdlp:bestvideo[height<=${h}]+bestaudio/best[height<=${h}]||${rawUrl}`,
             hasVideo: true,
             hasAudio: true,
           });
@@ -70,11 +70,11 @@ export class YtDlpProvider implements IProvider {
       if (formats.length === 0) {
         formats.push({
           id: 'ytdlp_best',
-          label: 'Best Quality (MP4)',
+          label: 'Best Quality (MP4 Video + Audio)',
           quality: 'Best',
           format: 'mp4',
           mimeType: 'video/mp4',
-          url: `ytdlp://${encodeURIComponent(rawUrl)}?quality=best`,
+          url: `ytdlp:bestvideo+bestaudio/best||${rawUrl}`,
           hasVideo: true,
           hasAudio: true,
         });
@@ -86,7 +86,7 @@ export class YtDlpProvider implements IProvider {
           quality: 'Best',
           format: 'mp4',
           mimeType: 'video/mp4',
-          url: `ytdlp://${encodeURIComponent(rawUrl)}?quality=best`,
+          url: `ytdlp:bestvideo+bestaudio/best||${rawUrl}`,
           hasVideo: true,
           hasAudio: true,
         });

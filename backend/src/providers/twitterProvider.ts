@@ -85,13 +85,16 @@ export class TwitterProvider implements IProvider {
 
           const formats: VideoFormat[] = [];
           const rawFormats = info.formats || [];
-          const videoFormats = rawFormats.filter(f => f.url && f.vcodec !== 'none');
+          // Check if there are any true progressive video formats (BOTH video AND audio)
+          const progressiveFormats = rawFormats.filter(
+            f => f.url && f.vcodec !== 'none' && f.acodec && f.acodec !== 'none'
+          );
 
-          if (videoFormats.length > 0) {
-            const best = videoFormats[videoFormats.length - 1];
+          if (progressiveFormats.length > 0) {
+            const best = progressiveFormats[progressiveFormats.length - 1];
             formats.push({
               id: 'twitter_ytdlp_best',
-              label: 'MP4 (Best Quality)',
+              label: 'MP4 (Video + Audio)',
               quality: best.height ? `${best.height}p` : 'Original',
               format: 'mp4',
               mimeType: 'video/mp4',
@@ -103,11 +106,11 @@ export class TwitterProvider implements IProvider {
           } else {
             formats.push({
               id: 'twitter_ytdlp_fallback',
-              label: '⭐ Best Available (MP4)',
+              label: '⭐ Best Available (MP4 Video + Audio)',
               quality: 'Best',
               format: 'mp4',
               mimeType: 'video/mp4',
-              url: `ytdlp:best||${rawUrl}`,
+              url: `ytdlp:bestvideo+bestaudio/best||${rawUrl}`,
               hasVideo: true,
               hasAudio: true,
             });

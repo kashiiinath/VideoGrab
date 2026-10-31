@@ -283,6 +283,7 @@ export async function downloadWithYtDlp(
       ...getBaseArgs(),
       '-f', formatSpec,
       '--merge-output-format', 'mp4',
+      '--postprocessor-args', 'ffmpeg_o:-c:v copy -c:a aac -b:a 192k',
       '-o', outputTemplate,
       '--no-part',
       '--restrict-filenames',

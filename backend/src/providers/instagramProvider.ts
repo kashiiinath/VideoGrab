@@ -26,15 +26,17 @@ export class InstagramProvider implements IProvider {
           const formats: VideoFormat[] = [];
           const rawFormats = info.formats || [];
 
-          // Check if there are any video formats with direct URLs
-          const videoFormats = rawFormats.filter(f => f.url && f.vcodec !== 'none');
+          // Check if there are any true progressive video formats (BOTH video AND audio)
+          const progressiveFormats = rawFormats.filter(
+            f => f.url && f.vcodec !== 'none' && f.acodec && f.acodec !== 'none'
+          );
 
-          if (videoFormats.length > 0) {
-            // Instagram typically has progressive formats, use direct URL
-            const best = videoFormats[videoFormats.length - 1];
+          if (progressiveFormats.length > 0) {
+            // Instagram progressive format with verified audio
+            const best = progressiveFormats[progressiveFormats.length - 1];
             formats.push({
               id: 'insta_best',
-              label: 'MP4 (Original Video + Audio)',
+              label: 'MP4 (Video + Audio)',
               quality: best.height ? `${best.height}p` : 'Original',
               format: 'mp4',
               mimeType: 'video/mp4',
@@ -43,24 +45,12 @@ export class InstagramProvider implements IProvider {
               hasVideo: true,
               hasAudio: true,
             });
-          } else if (info.url) {
-            formats.push({
-              id: 'insta_direct',
-              label: 'MP4 (Original Video)',
-              quality: 'Original',
-              format: 'mp4',
-              mimeType: 'video/mp4',
-              url: info.url,
-              hasVideo: true,
-              hasAudio: true,
-            });
-          }
-
-          // Also add a yt-dlp based fallback format for merging
-          if (formats.length === 0) {
+          } else {
+            // When Instagram only serves separate DASH video & audio streams,
+            // route through yt-dlp to download and merge both video + audio into a complete MP4
             formats.push({
               id: 'insta_ytdlp',
-              label: '⭐ Best Available (MP4)',
+              label: '⭐ Best Quality (MP4 Video + Audio)',
               quality: 'Best',
               format: 'mp4',
               mimeType: 'video/mp4',
