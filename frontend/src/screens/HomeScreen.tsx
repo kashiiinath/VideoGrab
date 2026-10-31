@@ -8,7 +8,7 @@ import UrlInput from '@/components/UrlInput';
 import VideoCard from '@/components/VideoCard';
 import { SupportedSource } from '@/lib/types';
 import {
-  Crown, Settings as SettingsIcon, Play, CheckCircle2, Clock, MoreVertical,
+  Settings as SettingsIcon, Play, CheckCircle2, Clock, MoreVertical,
   AlertCircle, WifiOff
 } from 'lucide-react';
 
@@ -92,21 +92,33 @@ export default function HomeScreen() {
 
   return (
     <div className="space-y-6">
-      {/* 1. Header with Logo, PRO Badge, Settings Shortcut */}
-      <div className="flex items-center justify-between pt-1">
+      {/* 1. Glassmorphic Top Header with Logo, Online/Offline Status, Settings Shortcut */}
+      <div className="sticky top-0 z-30 -mx-1 px-3.5 py-2.5 rounded-3xl bg-[var(--vg-card)]/75 dark:bg-[#141728]/75 backdrop-blur-xl border border-[var(--vg-border)]/70 shadow-[0_8px_30px_rgb(0,0,0,0.15)] flex items-center justify-between transition-all">
         <Logo size="md" showText={true} showSubtitle={true} />
 
         <div className="flex items-center gap-2">
-          {/* PRO Badge */}
-          <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-500/15 to-yellow-500/20 border border-amber-500/40 text-amber-500 dark:text-amber-400 font-bold text-[11px] shadow-sm select-none">
-            <Crown size={12} className="fill-amber-400 text-amber-500" />
-            <span>PRO</span>
+          {/* Online / Offline Status Badge */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold tracking-wide select-none transition-all shadow-sm ${
+              backendOnline
+                ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400'
+            }`}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                backendOnline
+                  ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)] animate-pulse'
+                  : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.8)]'
+              }`}
+            />
+            <span>{backendOnline ? 'Online' : 'Offline'}</span>
           </div>
 
           {/* Settings Shortcut Button */}
           <button
             onClick={() => setActiveTab('settings')}
-            className="w-9 h-9 rounded-full flex items-center justify-center border border-[var(--vg-border)] text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:border-[#563BFF]/40 bg-[var(--vg-card)] transition-colors shadow-sm"
+            className="w-9 h-9 rounded-full flex items-center justify-center border border-[var(--vg-border)] text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:border-[#563BFF]/40 bg-[var(--vg-card)]/80 hover:bg-[var(--vg-card)] transition-all shadow-sm"
             aria-label="Settings"
           >
             <SettingsIcon size={17} />
