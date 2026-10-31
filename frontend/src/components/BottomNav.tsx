@@ -20,7 +20,7 @@ export default function BottomNav() {
       className="fixed bottom-3 left-1/2 -translate-x-1/2 z-50 w-[calc(100%-1.5rem)] max-w-md"
     >
       <div
-        className="rounded-3xl border px-3 py-2 flex items-center justify-around transition-all bg-white/50 dark:bg-white/[0.04] backdrop-blur-2xl border-black/[0.06] dark:border-white/[0.08] shadow-[0_8px_32px_rgba(0,0,0,0.06)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.4)]"
+        className="rounded-3xl border px-3 py-2 flex items-center justify-around transition-all bg-white/50 dark:bg-white/[0.04] backdrop-blur-2xl border-black/[0.06] dark:border-white/[0.08] shadow-sm dark:shadow-[0_2px_10px_rgba(0,0,0,0.15)]"
       >
         {tabs.map(({ id, label, icon: Icon }) => {
           const active = activeTab === id;

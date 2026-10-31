@@ -93,7 +93,7 @@ export default function HomeScreen() {
   return (
     <div className="space-y-6">
       {/* 1. Glassmorphic Top Header with Logo & Dynamic Online/Offline Status */}
-      <div className="sticky top-0 z-30 -mx-1 px-3.5 py-2.5 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-[0_4px_20px_rgba(0,0,0,0.03)] dark:shadow-[0_8px_32px_rgba(0,0,0,0.35)] flex items-center justify-between transition-all">
+      <div className="sticky top-0 z-30 -mx-1 px-3.5 py-2.5 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm dark:shadow-[0_2px_10px_rgba(0,0,0,0.15)] flex items-center justify-between transition-all">
         <Logo size="md" showText={true} showSubtitle={true} />
 
         {/* Online / Offline Status Badge */}
