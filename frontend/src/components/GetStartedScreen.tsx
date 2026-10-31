@@ -43,28 +43,31 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
               height="76"
               viewBox="0 0 100 100"
               fill="none"
-              className="filter drop-shadow-[0_4px_12px_rgba(86,59,255,0.6)]"
+              className="filter drop-shadow-[0_4px_14px_rgba(86,59,255,0.6)]"
             >
               <defs>
-                <linearGradient id="gs-logo-grad" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stopColor="#00B8FF" />
-                  <stop offset="50%" stopColor="#563BFF" />
-                  <stop offset="100%" stopColor="#DB20E8" />
+                <linearGradient id="gs-logo-grad-v2" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#00D2FF" />
+                  <stop offset="50%" stopColor="#5B38FF" />
+                  <stop offset="100%" stopColor="#E024D6" />
+                </linearGradient>
+                <linearGradient id="gs-play-grad-v2" x1="35" y1="35" x2="65" y2="65" gradientUnits="userSpaceOnUse">
+                  <stop offset="0%" stopColor="#00F0FF" />
+                  <stop offset="50%" stopColor="#5336FF" />
+                  <stop offset="100%" stopColor="#E226D8" />
                 </linearGradient>
               </defs>
 
+              {/* Outer Frame with Downward Arrow */}
               <path
-                d="M26 20C26 14 32.8 10.4 37.8 13.8L82.2 43.8C86.8 46.9 86.8 53.1 82.2 56.2L37.8 86.2C32.8 89.6 26 86 26 80V20Z"
-                fill="url(#gs-logo-grad)"
+                d="M26 34C26 22 35 13 47 13H76C82.6 13 88 18.4 88 25V66L97 66L82 85L67 66L76 66V25H47C42 25 38 29 38 34V70C38 75 42 79 47 79H72V91H47C35 91 26 82 26 70V34Z"
+                fill="url(#gs-logo-grad-v2)"
               />
 
+              {/* Center Play Button Triangle */}
               <path
-                d="M51 35C51 33.6 52.1 32.5 53.5 32.5C54.9 32.5 56 33.6 56 35V53.5L61.2 48.3C62.2 47.3 63.8 47.3 64.8 48.3C65.8 49.3 65.8 50.9 64.8 51.9L55.3 61.4C54.3 62.4 52.7 62.4 51.7 61.4L42.2 51.9C41.2 50.9 41.2 49.3 42.2 48.3C43.2 47.3 44.8 47.3 45.8 48.3L51 53.5V35Z"
-                fill="#FFFFFF"
-              />
-              <path
-                d="M41 63.5C39.6 63.5 38.5 64.6 38.5 66C38.5 67.4 39.6 68.5 41 68.5H66C67.4 68.5 68.5 67.4 68.5 66C68.5 64.6 67.4 63.5 66 63.5H62V66H45V63.5H41Z"
-                fill="#FFFFFF"
+                d="M43 38C43 34 47.4 31.6 50.8 33.6L71.8 46.6C75 48.6 75 53.4 71.8 55.4L50.8 68.4C47.4 70.4 43 68 43 64V38Z"
+                fill="url(#gs-play-grad-v2)"
               />
             </svg>
           </div>
