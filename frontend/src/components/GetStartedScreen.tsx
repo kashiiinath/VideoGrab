@@ -11,7 +11,22 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
   const [showInstallPopup, setShowInstallPopup] = useState(false);
 
   useEffect(() => {
-    // Show pop up message shortly after GetStartedScreen appears
+    // Check if app is ALREADY installed or running as standalone PWA
+    const isStandalone =
+      typeof window !== 'undefined' &&
+      (window.matchMedia('(display-mode: standalone)').matches ||
+        window.matchMedia('(display-mode: fullscreen)').matches ||
+        (window.navigator as any).standalone === true ||
+        document.referrer.includes('android-app://'));
+
+    const isInstalled = typeof window !== 'undefined' && localStorage.getItem('vidgrab_installed') === 'true';
+    const isDismissed = typeof window !== 'undefined' && localStorage.getItem('vidgrab_install_dismissed') === 'true';
+
+    // If app is already installed or running as standalone, NEVER show this install popup
+    if (isStandalone || isInstalled || isDismissed) {
+      return;
+    }
+
     const timer = setTimeout(() => {
       setShowInstallPopup(true);
     }, 600);
@@ -19,6 +34,10 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
   }, []);
 
   async function handleDownloadApp() {
+    try {
+      localStorage.setItem('vidgrab_installed', 'true');
+    } catch {}
+
     if (typeof window !== 'undefined' && window.__pwaInstallPrompt) {
       try {
         window.__pwaInstallPrompt.prompt();
@@ -36,6 +55,13 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
       '• iPhone / Safari: Tap the Share button at the bottom → "Add to Home Screen"\n' +
       '• Desktop Chrome: Click the install icon in the address bar'
     );
+    setShowInstallPopup(false);
+  }
+
+  function handleDismiss() {
+    try {
+      localStorage.setItem('vidgrab_install_dismissed', 'true');
+    } catch {}
     setShowInstallPopup(false);
   }
 
@@ -126,11 +152,16 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
 
       {/* Pop-up Message Modal: For better performance download the app */}
       {showInstallPopup && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-4 animate-in fade-in duration-300">
-          <div className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl relative bg-white/95 dark:bg-[#141728]/95 backdrop-blur-2xl border-black/[0.08] dark:border-white/[0.1] animate-in slide-in-from-bottom-6 duration-300">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) handleDismiss();
+          }}
+          className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
+        >
+          <div className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl relative bg-white/95 dark:bg-[#141728]/95 backdrop-blur-2xl border-black/[0.08] dark:border-white/[0.1] animate-in zoom-in-95 duration-300 my-auto">
             {/* Close Button */}
             <button
-              onClick={() => setShowInstallPopup(false)}
+              onClick={handleDismiss}
               className="absolute top-4 right-4 p-1.5 rounded-full text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/10 transition-colors"
               aria-label="Close"
             >
@@ -174,7 +205,7 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
               </button>
 
               <button
-                onClick={() => setShowInstallPopup(false)}
+                onClick={handleDismiss}
                 className="w-full py-2.5 rounded-full text-xs font-semibold text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] transition-colors text-center"
               >
                 Continue in Browser

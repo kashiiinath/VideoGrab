@@ -17,24 +17,26 @@ function AppShell() {
   const [phase, setPhase] = useState<AppPhase>('loading');
 
   useEffect(() => {
-    try {
-      const started = sessionStorage.getItem('vidgrab_started');
-      if (started === 'true') {
-        // Returning user → show splash briefly then go to app
-        setPhase('splash');
-      } else {
-        // First time → show splash then get-started
-        setPhase('splash');
-      }
-    } catch {
-      setPhase('splash');
-    }
+    setPhase('splash');
   }, []);
 
   const handleSplashComplete = useCallback(() => {
     try {
-      const started = sessionStorage.getItem('vidgrab_started');
-      if (started === 'true') {
+      const isStandalone =
+        typeof window !== 'undefined' &&
+        (window.matchMedia('(display-mode: standalone)').matches ||
+          window.matchMedia('(display-mode: fullscreen)').matches ||
+          (window.navigator as any).standalone === true ||
+          document.referrer.includes('android-app://'));
+
+      const started =
+        localStorage.getItem('vidgrab_started') === 'true' ||
+        sessionStorage.getItem('vidgrab_started') === 'true';
+
+      const installed = localStorage.getItem('vidgrab_installed') === 'true';
+
+      // If user is opening the installed app or has already started, go straight to app
+      if (isStandalone || installed || started) {
         setPhase('app');
       } else {
         setPhase('getstarted');
@@ -46,6 +48,7 @@ function AppShell() {
 
   function handleStart() {
     try {
+      localStorage.setItem('vidgrab_started', 'true');
       sessionStorage.setItem('vidgrab_started', 'true');
     } catch {}
     setPhase('app');

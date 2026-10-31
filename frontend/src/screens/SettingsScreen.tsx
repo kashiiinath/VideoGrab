@@ -98,9 +98,14 @@ export default function SettingsScreen() {
 
       {/* Theme Selection Modal */}
       {showThemeModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowThemeModal(false);
+          }}
+          className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
           <div
-            className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl animate-in fade-in zoom-in-95 duration-200"
+            className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl animate-in zoom-in-95 duration-200 my-auto"
             style={{
               backgroundColor: 'var(--vg-card)',
               borderColor: 'var(--vg-border)',
@@ -151,15 +156,20 @@ export default function SettingsScreen() {
 
       {/* Supported Sites Modal */}
       {showSitesModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowSitesModal(false);
+          }}
+          className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
           <div
-            className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl max-h-[80vh] overflow-y-auto scrollbar-hide"
+            className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl max-h-[75vh] overflow-y-auto scrollbar-hide animate-in zoom-in-95 duration-200 my-auto"
             style={{
               backgroundColor: 'var(--vg-card)',
               borderColor: 'var(--vg-border)',
             }}
           >
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between sticky top-0 bg-[var(--vg-card)] pb-1 z-10">
               <h3 className="font-bold text-[16px] text-[var(--vg-text-primary)]">Supported Sources</h3>
               <button
                 onClick={() => setShowSitesModal(false)}
@@ -194,9 +204,14 @@ export default function SettingsScreen() {
 
       {/* About Modal */}
       {showAboutModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowAboutModal(false);
+          }}
+          className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
           <div
-            className="w-full max-w-sm rounded-3xl border p-6 space-y-4 shadow-2xl text-center"
+            className="w-full max-w-sm rounded-3xl border p-6 space-y-4 shadow-2xl text-center animate-in zoom-in-95 duration-200 my-auto"
             style={{
               backgroundColor: 'var(--vg-card)',
               borderColor: 'var(--vg-border)',
@@ -233,9 +248,14 @@ export default function SettingsScreen() {
 
       {/* Privacy Policy Modal */}
       {showPrivacyModal && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-end sm:items-center justify-center p-3">
+        <div
+          onClick={(e) => {
+            if (e.target === e.currentTarget) setShowPrivacyModal(false);
+          }}
+          className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200"
+        >
           <div
-            className="w-full max-w-sm rounded-3xl border p-5 space-y-3 shadow-2xl text-xs text-[var(--vg-text-secondary)]"
+            className="w-full max-w-sm rounded-3xl border p-5 space-y-3 shadow-2xl text-xs text-[var(--vg-text-secondary)] animate-in zoom-in-95 duration-200 my-auto"
             style={{
               backgroundColor: 'var(--vg-card)',
               borderColor: 'var(--vg-border)',
