@@ -15,9 +15,27 @@ export async function analyzeUrl(url: string): Promise<VideoMetadata> {
   return res.data.data as VideoMetadata;
 }
 
+let _cachedSources: SupportedSource[] | null = null;
+
 export async function getSupportedSources(): Promise<SupportedSource[]> {
-  const res = await api.get('/analyze/sources');
-  return res.data.data as SupportedSource[];
+  if (_cachedSources && _cachedSources.length > 0) {
+    return _cachedSources;
+  }
+  try {
+    const res = await api.get('/analyze/sources');
+    _cachedSources = res.data.data as SupportedSource[];
+    return _cachedSources;
+  } catch {
+    if (_cachedSources) return _cachedSources;
+    return [
+      { name: 'YouTube', description: 'Videos & Audio', examples: [] },
+      { name: 'Instagram', description: 'Reels & Clips', examples: [] },
+      { name: 'Twitter / X', description: 'Video Tweets', examples: [] },
+      { name: 'TikTok', description: 'HD Videos', examples: [] },
+      { name: 'Facebook', description: 'Public Videos', examples: [] },
+      { name: 'Vimeo', description: 'Public Videos', examples: [] },
+    ];
+  }
 }
 
 // ── Downloads ────────────────────────────────────────────
@@ -122,6 +140,9 @@ export function formatDate(timestamp: number): string {
 
 export function getApiError(err: unknown): string {
   if (axios.isAxiosError(err)) {
+    if (err.response?.status === 429) {
+      return 'Rate limit reached. Please wait a few seconds before trying again.';
+    }
     return err.response?.data?.error || err.message;
   }
   if (err instanceof Error) return err.message;

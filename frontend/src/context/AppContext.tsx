@@ -1,8 +1,9 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { VideoMetadata, DownloadJob, AppSettings, Theme } from '@/lib/types';
 import { getDownloads } from '@/lib/api';
+import axios from 'axios';
 
 interface AppContextType {
   // Settings
@@ -40,7 +41,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [analyzedVideo, setAnalyzedVideo] = useState<VideoMetadata | null>(null);
   const [jobs, setJobs] = useState<DownloadJob[]>([]);
   const [activeTab, setActiveTab] = useState<TabName>('home');
-  const [backendOnline, setBackendOnline] = useState(false);
+  const [backendOnline, setBackendOnline] = useState(true);
+  const isRateLimitedRef = useRef(false);
 
   // Load settings from localStorage
   useEffect(() => {
@@ -75,12 +77,32 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshJobs = useCallback(async () => {
+    // If currently rate limited, skip auto poll for 15s
+    if (isRateLimitedRef.current) return;
+
     try {
       const data = await getDownloads();
       setJobs(data);
       setBackendOnline(true);
-    } catch {
-      setBackendOnline(false);
+      isRateLimitedRef.current = false;
+    } catch (err: any) {
+      if (axios.isAxiosError(err)) {
+        if (err.response?.status === 429) {
+          // Backend is alive, but rate-limited! Keep backendOnline = true
+          setBackendOnline(true);
+          isRateLimitedRef.current = true;
+          // Reset rate limit lockout after 20 seconds
+          setTimeout(() => {
+            isRateLimitedRef.current = false;
+          }, 20000);
+          return;
+        }
+        // Only set offline on genuine network connection failure
+        if (!err.response) {
+          setBackendOnline(false);
+          return;
+        }
+      }
     }
   }, []);
 
@@ -88,12 +110,22 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setJobs(prev => prev.map(j => j.id === id ? { ...j, ...updates } : j));
   }, []);
 
-  // Poll jobs every 3 seconds
+  // Intelligent polling:
+  // 1. Initial fetch once.
+  // 2. Only poll frequently (4s) if there is an active downloading job.
+  // 3. Otherwise, poll very infrequently (30s) only if on downloads tab.
   useEffect(() => {
     refreshJobs();
-    const interval = setInterval(refreshJobs, 5000);
+
+    const hasActiveJob = jobs.some(j => ['pending', 'ready', 'processing'].includes(j.status));
+    const intervalMs = hasActiveJob ? 4000 : activeTab === 'downloads' ? 20000 : 60000;
+
+    const interval = setInterval(() => {
+      refreshJobs();
+    }, intervalMs);
+
     return () => clearInterval(interval);
-  }, [refreshJobs]);
+  }, [refreshJobs, activeTab, jobs.length]);
 
   return (
     <AppContext.Provider value={{
