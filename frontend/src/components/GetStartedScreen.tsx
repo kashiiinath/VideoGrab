@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { ArrowRight, Zap, Film, ShieldCheck, Sparkles } from 'lucide-react';
+import { ArrowRight, Zap, Film, ShieldCheck } from 'lucide-react';
 
 interface GetStartedScreenProps {
   onStart: () => void;
@@ -18,16 +18,6 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
         <div className="absolute top-[-15%] left-[-20%] w-[500px] h-[500px] rounded-full bg-[#00B8FF]/15 blur-[120px]" />
         <div className="absolute bottom-[-15%] right-[-20%] w-[500px] h-[500px] rounded-full bg-[#DB20E8]/15 blur-[130px]" />
         <div className="absolute top-[40%] left-[30%] w-[350px] h-[350px] rounded-full bg-[#563BFF]/20 blur-[110px]" />
-      </div>
-
-      {/* Top Bar / Badge */}
-      <div className="w-full max-w-md mx-auto flex justify-between items-center pt-2">
-        <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-[var(--vg-card)] border border-[var(--vg-border)] shadow-sm">
-          <Sparkles size={13} className="text-[#00B8FF]" />
-          <span className="text-[11px] font-bold text-[var(--vg-text-secondary)] tracking-wide uppercase">
-            Premium PWA Experience
-          </span>
-        </div>
       </div>
 
       {/* Center Hero: Large Logo & Value Proposition */}
