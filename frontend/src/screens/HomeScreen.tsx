@@ -9,7 +9,7 @@ import VideoCard from '@/components/VideoCard';
 import { SupportedSource } from '@/lib/types';
 import {
   Crown, Settings as SettingsIcon, Play, CheckCircle2, Clock, MoreVertical,
-  Sparkles, Zap, Layers, AlertCircle, WifiOff
+  AlertCircle, WifiOff
 } from 'lucide-react';
 
 export default function HomeScreen() {
@@ -137,16 +137,10 @@ export default function HomeScreen() {
         <>
           {/* 4. Supported Platforms Grid / Row */}
           <div className="space-y-3">
-            <div className="flex items-center justify-between px-1">
+            <div className="px-1">
               <span className="text-xs font-bold text-[var(--vg-text-secondary)] uppercase tracking-wider">
                 Supported Platforms
               </span>
-              <button
-                onClick={() => setActiveTab('settings')}
-                className="text-[11px] font-semibold text-[#563BFF] dark:text-[#00B8FF] hover:underline"
-              >
-                More
-              </button>
             </div>
 
             <div className="grid grid-cols-4 gap-2.5">
@@ -167,34 +161,7 @@ export default function HomeScreen() {
             </div>
           </div>
 
-          {/* 5. Feature Highlights Pills */}
-          <div className="grid grid-cols-3 gap-2 pt-1">
-            <div className="rounded-2xl p-3 text-center border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm">
-              <div className="w-8 h-8 rounded-xl bg-emerald-500/15 text-emerald-500 flex items-center justify-center mx-auto mb-1.5">
-                <Sparkles size={16} />
-              </div>
-              <p className="text-[12px] font-bold text-[var(--vg-text-primary)]">High Quality</p>
-              <p className="text-[10px] text-[var(--vg-text-muted)] font-medium mt-0.5">Up to 4K</p>
-            </div>
-
-            <div className="rounded-2xl p-3 text-center border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm">
-              <div className="w-8 h-8 rounded-xl bg-[#563BFF]/15 text-[#563BFF] dark:text-[#00B8FF] flex items-center justify-center mx-auto mb-1.5">
-                <Zap size={16} />
-              </div>
-              <p className="text-[12px] font-bold text-[var(--vg-text-primary)]">Fast Download</p>
-              <p className="text-[10px] text-[var(--vg-text-muted)] font-medium mt-0.5">Super Fast</p>
-            </div>
-
-            <div className="rounded-2xl p-3 text-center border border-[var(--vg-border)] bg-[var(--vg-card)] shadow-sm">
-              <div className="w-8 h-8 rounded-xl bg-[#DB20E8]/15 text-[#DB20E8] flex items-center justify-center mx-auto mb-1.5">
-                <Layers size={16} />
-              </div>
-              <p className="text-[12px] font-bold text-[var(--vg-text-primary)]">Multi Formats</p>
-              <p className="text-[10px] text-[var(--vg-text-muted)] font-medium mt-0.5">MP4, WebM</p>
-            </div>
-          </div>
-
-          {/* 6. Recent Downloads Section */}
+          {/* 5. Recent Downloads Section */}
           <div className="space-y-3 pt-2">
             <div className="flex items-center justify-between px-1">
               <h2 className="text-sm font-bold text-[var(--vg-text-primary)]">
