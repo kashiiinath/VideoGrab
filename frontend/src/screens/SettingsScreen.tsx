@@ -11,7 +11,7 @@ import {
 import { Theme } from '@/lib/types';
 
 export default function SettingsScreen() {
-  const { settings, updateSettings, backendOnline, setActiveTab } = useApp();
+  const { settings, updateSettings, setActiveTab } = useApp();
   const [historyCleared, setHistoryCleared] = useState(false);
   const [showThemeModal, setShowThemeModal] = useState(false);
   const [showSitesModal, setShowSitesModal] = useState(false);
@@ -95,22 +95,6 @@ export default function SettingsScreen() {
         />
       </div>
 
-      {/* Backend Engine Status Pill */}
-      <div
-        className="rounded-2xl border p-3 flex items-center justify-between text-xs"
-        style={{
-          backgroundColor: 'var(--vg-card)',
-          borderColor: 'var(--vg-border)',
-        }}
-      >
-        <span className="font-semibold text-[var(--vg-text-secondary)]">Backend Engine</span>
-        <div className="flex items-center gap-1.5 font-bold">
-          <span className={`w-2 h-2 rounded-full ${backendOnline ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-          <span className={backendOnline ? 'text-emerald-500' : 'text-rose-500'}>
-            {backendOnline ? 'Connected' : 'Offline'}
-          </span>
-        </div>
-      </div>
 
       {/* Theme Selection Modal */}
       {showThemeModal && (
