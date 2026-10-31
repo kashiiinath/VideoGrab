@@ -47,9 +47,9 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
             >
               <defs>
                 <linearGradient id="gs-logo-grad" x1="10" y1="10" x2="90" y2="90" gradientUnits="userSpaceOnUse">
-                  <stop offset="0%" stop-color="#00B8FF" />
-                  <stop offset="50%" stop-color="#563BFF" />
-                  <stop offset="100%" stop-color="#DB20E8" />
+                  <stop offset="0%" stopColor="#00B8FF" />
+                  <stop offset="50%" stopColor="#563BFF" />
+                  <stop offset="100%" stopColor="#DB20E8" />
                 </linearGradient>
               </defs>
 
@@ -126,3 +126,4 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
     </div>
   );
 }
+
