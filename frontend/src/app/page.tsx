@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { AppProvider, useApp } from '@/context/AppContext';
 import BottomNav from '@/components/BottomNav';
 import HomeScreen from '@/screens/HomeScreen';
+import MusicScreen from '@/screens/MusicScreen';
 import DownloadsScreen from '@/screens/DownloadsScreen';
 import HistoryScreen from '@/screens/HistoryScreen';
 import SettingsScreen from '@/screens/SettingsScreen';
@@ -93,6 +94,7 @@ function AppShell() {
       <div className="w-full max-w-md mx-auto flex-1 flex flex-col relative px-4 pt-3 pb-28">
         <main className="flex-1">
           {activeTab === 'home'      && <HomeScreen />}
+          {activeTab === 'music'     && <MusicScreen />}
           {activeTab === 'downloads' && <DownloadsScreen />}
           {activeTab === 'history'   && <HistoryScreen />}
           {activeTab === 'settings'  && <SettingsScreen />}

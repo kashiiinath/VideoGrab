@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { VideoMetadata, DownloadJob, HistoryEntry, SupportedSource } from './types';
+import { VideoMetadata, DownloadJob, HistoryEntry, SupportedSource, MusicMetadata, MusicSource } from './types';
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -8,11 +8,84 @@ const api = axios.create({
   timeout: 120000,
 });
 
-// ── Analyze ──────────────────────────────────────────────
+// ── Analyze Video ────────────────────────────────────────
 
 export async function analyzeUrl(url: string): Promise<VideoMetadata> {
   const res = await api.post('/analyze', { url });
   return res.data.data as VideoMetadata;
+}
+
+// ── Analyze Music ────────────────────────────────────────
+
+export async function analyzeMusicUrl(url: string): Promise<MusicMetadata> {
+  const res = await api.post('/music/analyze', { url });
+  return res.data.data as MusicMetadata;
+}
+
+export async function analyzeMusicPlaylist(url: string): Promise<MusicMetadata> {
+  const res = await api.post('/music/playlist/analyze', { url });
+  return res.data.data as MusicMetadata;
+}
+
+let _cachedMusicSources: MusicSource[] | null = null;
+
+export async function getMusicSources(): Promise<MusicSource[]> {
+  if (_cachedMusicSources && _cachedMusicSources.length > 0) {
+    return _cachedMusicSources;
+  }
+  try {
+    const res = await api.get('/music/sources');
+    _cachedMusicSources = res.data.data as MusicSource[];
+    return _cachedMusicSources;
+  } catch {
+    return [
+      {
+        id: 'ytmusic',
+        name: 'YouTube Music',
+        category: 'Full Audio Download',
+        canDownload: true,
+        formats: ['MP3 320k', 'M4A 256k', 'WAV'],
+        description: 'High-res audio extraction with metadata & artwork.',
+        examples: [],
+      },
+      {
+        id: 'spotify',
+        name: 'Spotify',
+        category: 'Metadata Preview & Stream',
+        canDownload: false,
+        formats: ['Open in Spotify'],
+        description: 'Widevine DRM protected. Rich track metadata & artwork.',
+        examples: [],
+      },
+      {
+        id: 'apple',
+        name: 'Apple Music',
+        category: 'Metadata Preview & Stream',
+        canDownload: false,
+        formats: ['Open in Apple Music'],
+        description: 'FairPlay DRM protected. Metadata & official player.',
+        examples: [],
+      },
+      {
+        id: 'soundcloud',
+        name: 'SoundCloud',
+        category: 'Stream & Download',
+        canDownload: true,
+        formats: ['MP3', 'M4A'],
+        description: 'Public music tracks and artist audio.',
+        examples: [],
+      },
+      {
+        id: 'bandcamp',
+        name: 'Bandcamp',
+        category: 'High Quality Audio',
+        canDownload: true,
+        formats: ['MP3', 'WAV'],
+        description: 'Independent tracks and albums.',
+        examples: [],
+      },
+    ];
+  }
 }
 
 let _cachedSources: SupportedSource[] | null = null;
@@ -43,6 +116,8 @@ export async function getSupportedSources(): Promise<SupportedSource[]> {
 export async function createDownload(params: {
   url: string;
   title?: string;
+  artist?: string;
+  mediaType?: 'video' | 'music';
   thumbnail?: string;
   sourceDomain?: string;
   format?: string;

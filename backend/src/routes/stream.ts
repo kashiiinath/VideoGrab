@@ -69,7 +69,19 @@ router.get('/proxy', streamLimiter, async (req: Request, res: Response): Promise
         ? safeFilename
         : safeFilename.replace(/\.[^.]+$/, `.${ext}`);
 
-      res.setHeader('Content-Type', ext === 'm4a' ? 'audio/mp4' : 'video/mp4');
+      const mimeMap: Record<string, string> = {
+        mp3: 'audio/mpeg',
+        m4a: 'audio/mp4',
+        aac: 'audio/aac',
+        wav: 'audio/wav',
+        flac: 'audio/flac',
+        ogg: 'audio/ogg',
+        mp4: 'video/mp4',
+        webm: 'video/webm',
+        mkv: 'video/x-matroska',
+      };
+      const contentType = mimeMap[ext.toLowerCase()] || (['mp3', 'm4a', 'wav', 'flac'].includes(ext.toLowerCase()) ? 'audio/mpeg' : 'video/mp4');
+      res.setHeader('Content-Type', contentType);
       res.setHeader(
         'Content-Disposition',
         `attachment; filename="${finalFilename}"; filename*=UTF-8''${encodeURIComponent(finalFilename)}`

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { ArrowRight, Zap, Film, ShieldCheck, Download, X } from 'lucide-react';
+import Modal from '@/components/Modal';
 
 interface GetStartedScreenProps {
   onStart: () => void;
@@ -21,9 +22,10 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
 
     const isInstalled = typeof window !== 'undefined' && localStorage.getItem('vidgrab_installed') === 'true';
     const isDismissed = typeof window !== 'undefined' && localStorage.getItem('vidgrab_install_dismissed') === 'true';
+    const isStarted = typeof window !== 'undefined' && localStorage.getItem('vidgrab_started') === 'true';
 
-    // If app is already installed or running as standalone, NEVER show this install popup
-    if (isStandalone || isInstalled || isDismissed) {
+    // If app is already installed, running as standalone, or user already dismissed/started, NEVER show this popup
+    if (isStandalone || isInstalled || isDismissed || isStarted) {
       return;
     }
 
@@ -36,33 +38,27 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
   async function handleDownloadApp() {
     try {
       localStorage.setItem('vidgrab_installed', 'true');
+      localStorage.setItem('vidgrab_started', 'true');
+      localStorage.setItem('vidgrab_install_dismissed', 'true');
     } catch {}
 
     if (typeof window !== 'undefined' && window.__pwaInstallPrompt) {
       try {
         window.__pwaInstallPrompt.prompt();
-        const choice = await window.__pwaInstallPrompt.userChoice;
-        if (choice && choice.outcome === 'accepted') {
-          setShowInstallPopup(false);
-          return;
-        }
+        await window.__pwaInstallPrompt.userChoice;
       } catch {}
     }
-    // Fallback instructions if native prompt is not active or already installed
-    alert(
-      'To install VIDGRAB:\n\n' +
-      '• Android / Chrome: Tap the top-right menu (3 dots) → "Install app" or "Add to Home screen"\n' +
-      '• iPhone / Safari: Tap the Share button at the bottom → "Add to Home Screen"\n' +
-      '• Desktop Chrome: Click the install icon in the address bar'
-    );
     setShowInstallPopup(false);
+    onStart();
   }
 
   function handleDismiss() {
     try {
       localStorage.setItem('vidgrab_install_dismissed', 'true');
+      localStorage.setItem('vidgrab_started', 'true');
     } catch {}
     setShowInstallPopup(false);
+    onStart();
   }
 
   return (
@@ -151,69 +147,56 @@ export default function GetStartedScreen({ onStart }: GetStartedScreenProps) {
       </div>
 
       {/* Pop-up Message Modal: For better performance download the app */}
-      {showInstallPopup && (
-        <div
-          onClick={(e) => {
-            if (e.target === e.currentTarget) handleDismiss();
-          }}
-          className="fixed inset-0 z-[100] bg-black/65 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-300"
-        >
-          <div className="w-full max-w-sm rounded-3xl border p-5 space-y-4 shadow-2xl relative bg-white/95 dark:bg-[#141728]/95 backdrop-blur-2xl border-black/[0.08] dark:border-white/[0.1] animate-in zoom-in-95 duration-300 my-auto">
-            {/* Close Button */}
-            <button
-              onClick={handleDismiss}
-              className="absolute top-4 right-4 p-1.5 rounded-full text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/10 transition-colors"
-              aria-label="Close"
-            >
-              <X size={18} />
-            </button>
-
-            {/* Icon & Title Header */}
-            <div className="flex items-center gap-3 pr-6">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00B8FF]/20 to-[#DB20E8]/20 border border-[var(--vg-border)] flex items-center justify-center flex-shrink-0 shadow-sm">
-                <img
-                  src="/logo/vidgrab-logo-icon.png"
-                  alt="VIDGRAB"
-                  width={36}
-                  height={36}
-                  className="w-8 h-8 object-contain"
-                />
-              </div>
-              <div>
-                <h4 className="font-extrabold text-sm text-[var(--vg-text-primary)]">
-                  Download VIDGRAB App
-                </h4>
-                <p className="text-[11px] font-semibold text-[#00B8FF]">
-                  Official PWA Available
-                </p>
-              </div>
-            </div>
-
-            {/* Message Body */}
-            <p className="text-xs text-[var(--vg-text-secondary)] leading-relaxed">
-              For better performance, faster downloads, and offline saving, download the app on your device.
+      <Modal
+        isOpen={showInstallPopup}
+        onClose={handleDismiss}
+        showCloseButton={true}
+        maxWidth="max-w-sm"
+      >
+        {/* Icon & Title Header */}
+        <div className="flex items-center gap-3 pr-6">
+          <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#00B8FF]/20 to-[#DB20E8]/20 border border-[var(--vg-border)] flex items-center justify-center flex-shrink-0 shadow-sm">
+            <img
+              src="/logo/vidgrab-logo-icon.png"
+              alt="VIDGRAB"
+              width={36}
+              height={36}
+              className="w-8 h-8 object-contain"
+            />
+          </div>
+          <div>
+            <h4 className="font-extrabold text-sm text-[var(--vg-text-primary)]">
+              Download VIDGRAB App
+            </h4>
+            <p className="text-[11px] font-semibold text-[#00B8FF]">
+              Official PWA Available
             </p>
-
-            {/* Action Buttons */}
-            <div className="space-y-2 pt-1">
-              <button
-                onClick={handleDownloadApp}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold gradient-btn shadow-md active:scale-[0.98] transition-all"
-              >
-                <Download size={15} strokeWidth={2.5} />
-                <span>Download App</span>
-              </button>
-
-              <button
-                onClick={handleDismiss}
-                className="w-full py-2.5 rounded-full text-xs font-semibold text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] transition-colors text-center"
-              >
-                Continue in Browser
-              </button>
-            </div>
           </div>
         </div>
-      )}
+
+        {/* Message Body */}
+        <p className="text-xs text-[var(--vg-text-secondary)] leading-relaxed">
+          For better performance, faster downloads, and offline saving, download the app on your device.
+        </p>
+
+        {/* Action Buttons */}
+        <div className="space-y-2 pt-1">
+          <button
+            onClick={handleDownloadApp}
+            className="w-full flex items-center justify-center gap-2 py-3 rounded-full text-xs font-bold gradient-btn shadow-md active:scale-[0.98] transition-all"
+          >
+            <Download size={15} strokeWidth={2.5} />
+            <span>Download App</span>
+          </button>
+
+          <button
+            onClick={handleDismiss}
+            className="w-full py-2.5 rounded-full text-xs font-semibold text-[var(--vg-text-muted)] hover:text-[var(--vg-text-primary)] transition-colors text-center"
+          >
+            Continue in Browser
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

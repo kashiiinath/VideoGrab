@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Home, Download, History, Settings } from 'lucide-react';
+import { Home, Music, Download, History, Settings } from 'lucide-react';
 import { useApp, TabName } from '@/context/AppContext';
 
 const tabs: { id: TabName; label: string; icon: React.FC<{ size?: number; strokeWidth?: number; className?: string }> }[] = [
-  { id: 'home',      label: 'Home',      icon: Home },
+  { id: 'home',      label: 'Video',     icon: Home },
+  { id: 'music',     label: 'Music',     icon: Music },
   { id: 'downloads', label: 'Downloads', icon: Download },
   { id: 'history',   label: 'History',   icon: History },
   { id: 'settings',  label: 'Settings',  icon: Settings },
@@ -31,7 +32,7 @@ export default function BottomNav() {
               key={id}
               onClick={() => setActiveTab(id)}
               className={`
-                relative flex flex-col items-center justify-center py-1.5 px-4 rounded-2xl
+                relative flex flex-col items-center justify-center py-1 px-2 sm:px-3 rounded-2xl
                 transition-all duration-200 select-none
                 ${active
                   ? 'bg-gradient-to-r from-[#00B8FF]/15 via-[#563BFF]/20 to-[#DB20E8]/15 text-[#563BFF] dark:text-[#00B8FF]'

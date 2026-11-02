@@ -34,6 +34,7 @@ export default function VideoCard({ metadata, onBack }: VideoCardProps) {
       const job = await createDownload({
         url: metadata.url,
         title: metadata.title,
+        mediaType: 'video',
         thumbnail: metadata.thumbnail,
         sourceDomain: metadata.sourceDomain,
         format: selectedFormat.format,

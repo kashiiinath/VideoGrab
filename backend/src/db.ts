@@ -13,6 +13,8 @@ export interface DownloadJob {
   id: string;
   url: string;
   title?: string;
+  artist?: string;
+  mediaType?: 'video' | 'music';
   thumbnail?: string;
   sourceDomain?: string;
   format?: string;
@@ -35,6 +37,8 @@ export interface HistoryEntry {
   jobId: string;
   url: string;
   title?: string;
+  artist?: string;
+  mediaType?: 'video' | 'music';
   thumbnail?: string;
   sourceDomain?: string;
   format?: string;

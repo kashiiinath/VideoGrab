@@ -173,6 +173,10 @@ export interface YtDlpFormat {
 export interface YtDlpInfo {
   id: string;
   title: string;
+  uploader?: string;
+  artist?: string;
+  album?: string;
+  _type?: string;
   thumbnail?: string;
   duration?: number;
   extractor_key?: string;
@@ -279,16 +283,39 @@ export async function downloadWithYtDlp(
   const outputTemplate = path.join(tmpDir, `${fileId}_%(title).50s.%(ext)s`);
 
   return new Promise((resolve, reject) => {
-    const args = [
-      ...getBaseArgs(),
-      '-f', formatSpec,
-      '--merge-output-format', 'mp4',
-      '--postprocessor-args', 'ffmpeg_o:-c:v copy -c:a aac -b:a 192k',
-      '-o', outputTemplate,
-      '--no-part',
-      '--restrict-filenames',
-      videoUrl,
-    ];
+    const isAudio = formatSpec.startsWith('audio:');
+    let args: string[];
+
+    if (isAudio) {
+      // Format spec syntax: audio:TARGET_FORMAT:QUALITY (e.g. audio:mp3:320k, audio:m4a:256k, audio:wav:lossless)
+      const parts = formatSpec.split(':');
+      const audioFormat = parts[1] || 'mp3';
+      const qualityStr = parts[2] || '192k';
+      const audioQuality = qualityStr === '320k' ? '0' : qualityStr;
+
+      args = [
+        ...getBaseArgs(),
+        '-x',
+        '--audio-format', audioFormat,
+        '--audio-quality', audioQuality,
+        '--embed-metadata',
+        '-o', outputTemplate,
+        '--no-part',
+        '--restrict-filenames',
+        videoUrl,
+      ];
+    } else {
+      args = [
+        ...getBaseArgs(),
+        '-f', formatSpec,
+        '--merge-output-format', 'mp4',
+        '--postprocessor-args', 'ffmpeg_o:-c:v copy -c:a aac -b:a 192k',
+        '-o', outputTemplate,
+        '--no-part',
+        '--restrict-filenames',
+        videoUrl,
+      ];
+    }
 
     console.log(`[yt-dlp] Downloading: ${videoUrl} with format: ${formatSpec}`);
     console.log(`[yt-dlp] Output template: ${outputTemplate}`);

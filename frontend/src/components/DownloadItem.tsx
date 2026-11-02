@@ -7,7 +7,7 @@ import { downloadViaProxy } from '@/lib/download';
 import { useApp } from '@/context/AppContext';
 import StatusBadge from './StatusBadge';
 import {
-  Trash2, RefreshCw, Download, Film, ChevronDown, ChevronUp, AlertCircle, Play, CheckCircle2
+  Trash2, RefreshCw, Download, Film, ChevronDown, ChevronUp, AlertCircle, Play, CheckCircle2, Music
 } from 'lucide-react';
 
 interface DownloadItemProps {
@@ -18,6 +18,7 @@ export default function DownloadItem({ job }: DownloadItemProps) {
   const { refreshJobs, updateJobLocal } = useApp();
   const [expanded, setExpanded] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const isMusic = job.mediaType === 'music' || ['mp3', 'm4a', 'wav', 'flac', 'aac'].includes(job.format?.toLowerCase() || '');
 
   async function handleDelete() {
     await deleteDownload(job.id);
@@ -77,11 +78,19 @@ export default function DownloadItem({ job }: DownloadItemProps) {
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center bg-neutral-800">
-              <Film size={18} className="text-neutral-500" />
+              {isMusic ? (
+                <Music size={18} className="text-[#00B8FF]" />
+              ) : (
+                <Film size={18} className="text-neutral-500" />
+              )}
             </div>
           )}
           <div className="absolute inset-0 bg-black/25 flex items-center justify-center">
-            <Play size={10} className="fill-white text-white opacity-90" />
+            {isMusic ? (
+              <Music size={11} className="text-white opacity-90" />
+            ) : (
+              <Play size={10} className="fill-white text-white opacity-90" />
+            )}
           </div>
         </div>
 
@@ -90,10 +99,19 @@ export default function DownloadItem({ job }: DownloadItemProps) {
           <p className="text-[13px] font-bold text-[var(--vg-text-primary)] truncate">
             {job.title || job.filename || 'Untitled'}
           </p>
-          <div className="flex items-center gap-2 mt-1 text-[11px] text-[var(--vg-text-muted)] font-medium">
-            <span>{job.quality || 'HD'}</span>
+          {job.artist && (
+            <p className="text-[11px] text-[var(--vg-text-secondary)] truncate font-semibold">
+              {job.artist}
+            </p>
+          )}
+          <div className="flex items-center gap-1.5 mt-0.5 text-[11px] text-[var(--vg-text-muted)] font-medium">
+            <span className={`text-[9px] font-bold px-1.5 py-0.2 rounded-md ${isMusic ? 'bg-[#00B8FF]/15 text-[#00B8FF]' : 'bg-[#563BFF]/15 text-[#563BFF]'}`}>
+              {isMusic ? 'MUSIC' : 'VIDEO'}
+            </span>
             <span>•</span>
-            <span>{job.format?.toUpperCase() || 'MP4'}</span>
+            <span>{job.quality || (isMusic ? '320k' : 'HD')}</span>
+            <span>•</span>
+            <span>{job.format?.toUpperCase() || (isMusic ? 'MP3' : 'MP4')}</span>
             {job.fileSize && (
               <>
                 <span>•</span>

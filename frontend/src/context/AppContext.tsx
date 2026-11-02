@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
-import { VideoMetadata, DownloadJob, AppSettings, Theme } from '@/lib/types';
+import { VideoMetadata, MusicMetadata, DownloadJob, AppSettings, Theme } from '@/lib/types';
 import { getDownloads } from '@/lib/api';
 import axios from 'axios';
 
@@ -13,6 +13,9 @@ interface AppContextType {
   // Active metadata (from analyze)
   analyzedVideo: VideoMetadata | null;
   setAnalyzedVideo: (v: VideoMetadata | null) => void;
+
+  analyzedMusic: MusicMetadata | null;
+  setAnalyzedMusic: (m: MusicMetadata | null) => void;
 
   // Download jobs
   jobs: DownloadJob[];
@@ -27,11 +30,13 @@ interface AppContextType {
   backendOnline: boolean;
 }
 
-export type TabName = 'home' | 'downloads' | 'history' | 'settings';
+export type TabName = 'home' | 'music' | 'downloads' | 'history' | 'settings';
 
 const defaultSettings: AppSettings = {
   theme: 'system',
   language: 'en',
+  defaultAudioQuality: '320k',
+  defaultVideoQuality: '720p',
 };
 
 const AppContext = createContext<AppContextType | null>(null);
@@ -39,6 +44,7 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(defaultSettings);
   const [analyzedVideo, setAnalyzedVideo] = useState<VideoMetadata | null>(null);
+  const [analyzedMusic, setAnalyzedMusic] = useState<MusicMetadata | null>(null);
   const [jobs, setJobs] = useState<DownloadJob[]>([]);
   const [activeTab, setActiveTab] = useState<TabName>('home');
   const [backendOnline, setBackendOnline] = useState(true);
@@ -133,6 +139,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       updateSettings,
       analyzedVideo,
       setAnalyzedVideo,
+      analyzedMusic,
+      setAnalyzedMusic,
       jobs,
       refreshJobs,
       updateJobLocal,

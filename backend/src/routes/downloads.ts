@@ -7,7 +7,7 @@ const router = Router();
 
 // POST /api/downloads — Create a download job
 router.post('/', async (req: Request, res: Response): Promise<void> => {
-  const { url, title, thumbnail, sourceDomain, format, quality, mimeType, fileSize, formatUrl } = req.body;
+  const { url, title, artist, mediaType, thumbnail, sourceDomain, format, quality, mimeType, fileSize, formatUrl } = req.body;
 
   if (!url || !formatUrl) {
     res.status(400).json({ success: false, error: 'url and formatUrl are required' });
@@ -43,6 +43,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     id,
     url,
     title,
+    artist,
+    mediaType: mediaType || (['mp3', 'm4a', 'wav', 'flac'].includes((format || '').toLowerCase()) ? 'music' : 'video'),
     thumbnail,
     sourceDomain,
     format,
@@ -64,6 +66,8 @@ router.post('/', async (req: Request, res: Response): Promise<void> => {
     jobId: id,
     url,
     title,
+    artist,
+    mediaType: job.mediaType,
     thumbnail,
     sourceDomain,
     format,

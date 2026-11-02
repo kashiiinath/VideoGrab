@@ -10,6 +10,7 @@ import analyzeRouter from './routes/analyze';
 import downloadsRouter from './routes/downloads';
 import historyRouter from './routes/history';
 import streamRouter from './routes/stream';
+import musicRouter from './routes/music';
 import { cleanupExpiredFiles } from './utils/cleanup';
 
 dotenv.config();
@@ -56,6 +57,7 @@ app.use(limiter);
 
 // Routes
 app.use('/api/analyze', analyzeRouter);
+app.use('/api/music', musicRouter);
 app.use('/api/downloads', downloadsRouter);
 app.use('/api/history', historyRouter);
 app.use('/api/stream', streamRouter);
