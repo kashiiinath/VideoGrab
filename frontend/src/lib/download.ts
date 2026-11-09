@@ -117,7 +117,7 @@ export async function downloadViaProxy(options: DownloadOptions): Promise<void> 
         }
       }
 
-      blob = new Blob(chunks, { type: contentType });
+      blob = new Blob(chunks as BlobPart[], { type: contentType });
     } else {
       onProgress?.({ percent: 50, speed: 'Processing stream…' });
       blob = await res.blob();
