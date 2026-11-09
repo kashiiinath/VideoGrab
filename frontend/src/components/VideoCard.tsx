@@ -48,7 +48,7 @@ export default function VideoCard({ metadata, onBack }: VideoCardProps) {
         jobId: job.id,
         formatUrl: selectedFormat.url,
         filename: job.filename,
-        onProgress: (p) => setProgress(p),
+        onProgress: (info) => setProgress(typeof info === 'number' ? info : info.percent),
         onComplete: () => {
           setDone(true);
           setDownloading(false);

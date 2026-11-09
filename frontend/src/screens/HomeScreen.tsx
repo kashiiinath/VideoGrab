@@ -8,8 +8,8 @@ import UrlInput from '@/components/UrlInput';
 import VideoCard from '@/components/VideoCard';
 import { SupportedSource } from '@/lib/types';
 import {
-  Play, CheckCircle2, Clock, MoreVertical,
-  AlertCircle, WifiOff
+  Play, CheckCircle2, Clock,
+  AlertCircle, WifiOff, Download
 } from 'lucide-react';
 
 export default function HomeScreen() {
@@ -18,6 +18,7 @@ export default function HomeScreen() {
   const [error, setError] = useState('');
   const [sources, setSources] = useState<SupportedSource[]>([]);
   const [selectedPlatform, setSelectedPlatform] = useState<string | null>(null);
+  const activeCount = jobs.filter(j => ['processing', 'ready'].includes(j.status)).length;
 
   useEffect(() => {
     getSupportedSources()
@@ -96,22 +97,39 @@ export default function HomeScreen() {
       <div className="sticky top-0 z-30 -mx-1 px-3.5 py-2.5 rounded-2xl bg-white/50 dark:bg-white/[0.04] backdrop-blur-2xl border border-black/[0.06] dark:border-white/[0.08] shadow-sm dark:shadow-[0_2px_10px_rgba(0,0,0,0.15)] flex items-center justify-between transition-all">
         <Logo size="md" showText={true} showSubtitle={true} />
 
-        {/* Online / Offline Status Badge */}
-        <div
-          className={`flex items-center gap-1.5 px-3 py-1 rounded-full border text-[11px] font-bold tracking-wide select-none transition-all shadow-sm ${
-            backendOnline
-              ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
-              : 'bg-rose-500/10 border-rose-500/25 text-rose-600 dark:text-rose-400'
-          }`}
-        >
-          <span
-            className={`w-2 h-2 rounded-full ${
+        <div className="flex items-center gap-1.5">
+          {/* Online / Offline Status Badge */}
+          <div
+            className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[11px] font-bold tracking-wide select-none transition-all shadow-sm ${
               backendOnline
-                ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse'
-                : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]'
+                ? 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-400'
+                : 'bg-rose-500/10 border-rose-500/25 text-rose-600 dark:text-rose-400'
             }`}
-          />
-          <span>{backendOnline ? 'Online' : 'Offline'}</span>
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${
+                backendOnline
+                  ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.7)] animate-pulse'
+                  : 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.7)]'
+              }`}
+            />
+            <span>{backendOnline ? 'Online' : 'Offline'}</span>
+          </div>
+
+          {/* Downloads shortcut */}
+          <button
+            onClick={() => setActiveTab('downloads')}
+            className="relative p-2 rounded-xl text-[var(--vg-text-secondary)] hover:text-[var(--vg-text-primary)] hover:bg-neutral-500/10 transition-colors"
+            aria-label="Downloads"
+            title="Downloads"
+          >
+            <Download size={18} />
+            {activeCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-[#563BFF] to-[#DB20E8] text-white text-[9px] font-bold w-4 h-4 rounded-full flex items-center justify-center leading-none shadow-sm">
+                {activeCount > 9 ? '9+' : activeCount}
+              </span>
+            )}
+          </button>
         </div>
       </div>
 

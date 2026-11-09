@@ -1,6 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
-import { createJob, getJob, getAllJobs, updateJob, deleteJob, createHistory, updateHistory, DownloadJob, HistoryEntry } from '../db';
+import { createJob, getJob, getAllJobs, updateJob, deleteJob, clearAllJobs, createHistory, updateHistory, DownloadJob, HistoryEntry } from '../db';
 import { validateUrl, checkSsrf, sanitizeFilename } from '../utils/security';
 
 const router = Router();
@@ -98,9 +98,33 @@ router.get('/:id', (req: Request, res: Response) => {
   res.json({ success: true, data: job });
 });
 
+// DELETE /api/downloads (Clear all download jobs)
+router.delete('/', (_req: Request, res: Response) => {
+  clearAllJobs();
+  res.json({ success: true });
+});
+
 // DELETE /api/downloads/:id
 router.delete('/:id', (req: Request, res: Response) => {
   deleteJob(req.params.id);
+  res.json({ success: true });
+});
+
+// POST /api/downloads/:id/pause
+router.post('/:id/pause', (req: Request, res: Response) => {
+  const job = getJob(req.params.id);
+  if (job) {
+    updateJob(req.params.id, { status: 'paused' });
+  }
+  res.json({ success: true });
+});
+
+// POST /api/downloads/:id/resume
+router.post('/:id/resume', (req: Request, res: Response) => {
+  const job = getJob(req.params.id);
+  if (job) {
+    updateJob(req.params.id, { status: 'processing' });
+  }
   res.json({ success: true });
 });
 

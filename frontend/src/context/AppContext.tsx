@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { VideoMetadata, MusicMetadata, DownloadJob, AppSettings, Theme } from '@/lib/types';
 import { getDownloads } from '@/lib/api';
+import { downloadViaProxy, pauseDownloadJob } from '@/lib/download';
 import axios from 'axios';
 
 interface AppContextType {
@@ -17,10 +18,15 @@ interface AppContextType {
   analyzedMusic: MusicMetadata | null;
   setAnalyzedMusic: (m: MusicMetadata | null) => void;
 
-  // Download jobs
+  // Download jobs & automatic queue
   jobs: DownloadJob[];
   refreshJobs: () => void;
   updateJobLocal: (id: string, updates: Partial<DownloadJob>) => void;
+  isQueuePaused: boolean;
+  setIsQueuePaused: (paused: boolean) => void;
+  currentlyDownloadingJob: DownloadJob | null;
+  pauseQueue: () => void;
+  resumeQueue: () => void;
 
   // Tab navigation
   activeTab: TabName;
@@ -49,6 +55,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [activeTab, setActiveTab] = useState<TabName>('home');
   const [backendOnline, setBackendOnline] = useState(true);
   const isRateLimitedRef = useRef(false);
+
+  // Automatic Background Queue State
+  const [isQueuePaused, setIsQueuePaused] = useState(false);
+  const [currentlyDownloadingJob, setCurrentlyDownloadingJob] = useState<DownloadJob | null>(null);
+  const isWorkerRunningRef = useRef(false);
+  const activeJobIdRef = useRef<string | null>(null);
 
   // Load settings from localStorage
   useEffect(() => {
@@ -83,7 +95,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const refreshJobs = useCallback(async () => {
-    // If currently rate limited, skip auto poll for 15s
+    // If currently rate limited, skip auto poll
     if (isRateLimitedRef.current) return;
 
     try {
@@ -97,13 +109,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
           // Backend is alive, but rate-limited! Keep backendOnline = true
           setBackendOnline(true);
           isRateLimitedRef.current = true;
-          // Reset rate limit lockout after 20 seconds
           setTimeout(() => {
             isRateLimitedRef.current = false;
           }, 20000);
           return;
         }
-        // Only set offline on genuine network connection failure
         if (!err.response) {
           setBackendOnline(false);
           return;
@@ -116,10 +126,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     setJobs(prev => prev.map(j => j.id === id ? { ...j, ...updates } : j));
   }, []);
 
-  // Intelligent polling:
-  // 1. Initial fetch once.
-  // 2. Only poll frequently (4s) if there is an active downloading job.
-  // 3. Otherwise, poll very infrequently (30s) only if on downloads tab.
+  // Intelligent polling
   useEffect(() => {
     refreshJobs();
 
@@ -133,6 +140,105 @@ export function AppProvider({ children }: { children: ReactNode }) {
     return () => clearInterval(interval);
   }, [refreshJobs, activeTab, jobs.length]);
 
+  // Pause entire queue
+  const pauseQueue = useCallback(() => {
+    setIsQueuePaused(true);
+    if (activeJobIdRef.current) {
+      pauseDownloadJob(activeJobIdRef.current);
+      updateJobLocal(activeJobIdRef.current, { status: 'paused', speed: undefined });
+    }
+  }, [updateJobLocal]);
+
+  // Resume entire queue
+  const resumeQueue = useCallback(() => {
+    setIsQueuePaused(false);
+    // Mark paused items as ready so the runner will pick them up
+    setJobs(prev => prev.map(j => j.status === 'paused' ? { ...j, status: 'ready' } : j));
+  }, []);
+
+  // VidMate Automatic Sequential Queue Runner:
+  // Automatically picks up pending/ready jobs one by one and saves directly to user's device
+  useEffect(() => {
+    if (isQueuePaused) return;
+    if (isWorkerRunningRef.current) return;
+
+    // Find next pending or ready job with valid formatUrl & filename
+    const nextJob = jobs.find(j =>
+      ['pending', 'ready'].includes(j.status) &&
+      Boolean(j.downloadUrl) &&
+      Boolean(j.filename)
+    );
+
+    if (!nextJob) {
+      if (currentlyDownloadingJob) {
+        setCurrentlyDownloadingJob(null);
+      }
+      return;
+    }
+
+    isWorkerRunningRef.current = true;
+    activeJobIdRef.current = nextJob.id;
+    setCurrentlyDownloadingJob(nextJob);
+
+    updateJobLocal(nextJob.id, {
+      status: 'processing',
+      progress: Math.max(5, nextJob.progress || 0),
+      speed: 'Connecting…'
+    });
+
+    (async () => {
+      try {
+        await downloadViaProxy({
+          jobId: nextJob.id,
+          formatUrl: nextJob.downloadUrl!,
+          filename: nextJob.filename || 'media.mp3',
+          onProgress: (info) => {
+            updateJobLocal(nextJob.id, {
+              status: 'processing',
+              progress: info.percent,
+              speed: info.speed,
+              downloadedBytes: info.downloadedBytes,
+              totalBytes: info.totalBytes,
+            });
+          },
+          onComplete: () => {
+            updateJobLocal(nextJob.id, {
+              status: 'completed',
+              progress: 100,
+              speed: undefined,
+            });
+            refreshJobs();
+          },
+          onPause: () => {
+            updateJobLocal(nextJob.id, {
+              status: 'paused',
+              speed: undefined,
+            });
+            refreshJobs();
+          },
+          onError: (err) => {
+            updateJobLocal(nextJob.id, {
+              status: 'failed',
+              errorMessage: err,
+              speed: undefined,
+            });
+            refreshJobs();
+          },
+        });
+      } catch (err) {
+        console.error('Queue download execution error:', err);
+      } finally {
+        isWorkerRunningRef.current = false;
+        activeJobIdRef.current = null;
+        setCurrentlyDownloadingJob(null);
+        // Brief settle delay between consecutive file saves
+        setTimeout(() => {
+          refreshJobs();
+        }, 1200);
+      }
+    })();
+  }, [jobs, isQueuePaused, updateJobLocal, refreshJobs, currentlyDownloadingJob]);
+
   return (
     <AppContext.Provider value={{
       settings,
@@ -144,6 +250,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       jobs,
       refreshJobs,
       updateJobLocal,
+      isQueuePaused,
+      setIsQueuePaused,
+      currentlyDownloadingJob,
+      pauseQueue,
+      resumeQueue,
       activeTab,
       setActiveTab,
       backendOnline,

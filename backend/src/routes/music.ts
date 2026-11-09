@@ -1,7 +1,7 @@
 import { Router, Request, Response } from 'express';
 import axios from 'axios';
 import { validateUrl, checkSsrf } from '../utils/security';
-import { getYtDlpMetadata, isYtDlpAvailable } from '../utils/ytdlp';
+import { getYtDlpMetadata, getYtDlpPlaylistMetadata, isYtDlpAvailable } from '../utils/ytdlp';
 
 const router = Router();
 
@@ -432,6 +432,41 @@ router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
     // 4. SOUNDCLOUD Handler
     if (platformInfo.id === 'soundcloud') {
       try {
+        const isSet = parsedUrl.pathname.includes('/sets/');
+        if (isSet && isYtDlpAvailable()) {
+          const pl = await getYtDlpPlaylistMetadata(rawUrl, 60);
+          const tracks: MusicTrack[] = pl.entries.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            artist: entry.uploader || pl.uploader || 'SoundCloud Artist',
+            duration: entry.duration,
+            thumbnail: entry.thumbnail || pl.thumbnail,
+            url: entry.url || rawUrl,
+            canDownload: true,
+            formats: generateAudioFormats(entry.url || rawUrl, entry.duration),
+          }));
+
+          res.json({
+            success: true,
+            data: {
+              type: 'playlist',
+              platform: 'SoundCloud',
+              platformId: 'soundcloud',
+              platformColor: '#FF5500',
+              title: pl.title,
+              artist: pl.uploader || 'SoundCloud Artist',
+              artwork: pl.thumbnail,
+              trackCount: tracks.length,
+              tracks,
+              canDownload: true,
+              formats: generateAudioFormats(rawUrl, 240),
+              officialUrl: rawUrl,
+              url: rawUrl,
+            },
+          });
+          return;
+        }
+
         const oembedRes = await axios.get(
           `https://soundcloud.com/oembed?format=json&url=${encodeURIComponent(rawUrl)}`,
           { timeout: 8000 }
@@ -497,39 +532,149 @@ router.post('/analyze', async (req: Request, res: Response): Promise<void> => {
 
     // 6. YOUTUBE MUSIC & UNIVERSAL ENGINE (Supported for real audio download)
     if (isYtDlpAvailable()) {
-      const info = await getYtDlpMetadata(rawUrl);
-      const title = info.title || 'Audio Track';
-      const artist = info.uploader || (info as any).artist || platformInfo.name;
-      const duration = info.duration ? Math.round(info.duration) : undefined;
-      const artwork = info.thumbnail;
-
-      // Check if this is a playlist / album
-      const isPlaylist =
+      const isPlaylistUrl =
         platformInfo.type === 'playlist' ||
         platformInfo.type === 'album' ||
-        (info as any)._type === 'playlist';
+        parsedUrl.searchParams.has('list') ||
+        parsedUrl.pathname.includes('/playlist') ||
+        parsedUrl.pathname.includes('/album');
 
-      const formats = generateAudioFormats(rawUrl, duration);
+      if (isPlaylistUrl) {
+        try {
+          const pl = await getYtDlpPlaylistMetadata(rawUrl, 60);
+          const tracks: MusicTrack[] = pl.entries.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            artist: entry.uploader || pl.uploader || platformInfo.name,
+            duration: entry.duration,
+            thumbnail: entry.thumbnail || pl.thumbnail,
+            url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`,
+            canDownload: true,
+            formats: generateAudioFormats(entry.url || `https://www.youtube.com/watch?v=${entry.id}`, entry.duration),
+          }));
 
-      res.json({
-        success: true,
-        data: {
-          type: isPlaylist ? 'playlist' : 'song',
-          platform: platformInfo.name,
-          platformId: platformInfo.id,
-          platformColor: platformInfo.color,
-          title,
-          artist,
-          album: (info as any).album,
-          artwork,
-          duration,
-          canDownload: true,
-          formats,
-          officialUrl: rawUrl,
-          url: rawUrl,
-        },
-      });
-      return;
+          res.json({
+            success: true,
+            data: {
+              type: 'playlist',
+              platform: platformInfo.name,
+              platformId: platformInfo.id,
+              platformColor: platformInfo.color,
+              title: pl.title,
+              artist: pl.uploader || platformInfo.name,
+              artwork: pl.thumbnail,
+              trackCount: tracks.length,
+              tracks,
+              canDownload: true,
+              formats: generateAudioFormats(rawUrl, 210),
+              officialUrl: rawUrl,
+              url: rawUrl,
+            },
+          });
+          return;
+        } catch (plErr: any) {
+          console.warn('[yt-dlp] Direct playlist analyze failed, falling back:', plErr?.message);
+        }
+      }
+
+      // Single track extraction with playlist fallback
+      try {
+        const info = await getYtDlpMetadata(rawUrl);
+        if ((info as any)._type === 'playlist') {
+          const pl = await getYtDlpPlaylistMetadata(rawUrl, 60);
+          const tracks: MusicTrack[] = pl.entries.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            artist: entry.uploader || pl.uploader || platformInfo.name,
+            duration: entry.duration,
+            thumbnail: entry.thumbnail || pl.thumbnail,
+            url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`,
+            canDownload: true,
+            formats: generateAudioFormats(entry.url || `https://www.youtube.com/watch?v=${entry.id}`, entry.duration),
+          }));
+
+          res.json({
+            success: true,
+            data: {
+              type: 'playlist',
+              platform: platformInfo.name,
+              platformId: platformInfo.id,
+              platformColor: platformInfo.color,
+              title: pl.title,
+              artist: pl.uploader || platformInfo.name,
+              artwork: pl.thumbnail,
+              trackCount: tracks.length,
+              tracks,
+              canDownload: true,
+              formats: generateAudioFormats(rawUrl, 210),
+              officialUrl: rawUrl,
+              url: rawUrl,
+            },
+          });
+          return;
+        }
+
+        const title = info.title || 'Audio Track';
+        const artist = info.uploader || (info as any).artist || platformInfo.name;
+        const duration = info.duration ? Math.round(info.duration) : undefined;
+        const artwork = info.thumbnail;
+        const formats = generateAudioFormats(rawUrl, duration);
+
+        res.json({
+          success: true,
+          data: {
+            type: 'song',
+            platform: platformInfo.name,
+            platformId: platformInfo.id,
+            platformColor: platformInfo.color,
+            title,
+            artist,
+            album: (info as any).album,
+            artwork,
+            duration,
+            canDownload: true,
+            formats,
+            officialUrl: rawUrl,
+            url: rawUrl,
+          },
+        });
+        return;
+      } catch (singleErr: any) {
+        if (singleErr?.message?.includes('playlist')) {
+          const pl = await getYtDlpPlaylistMetadata(rawUrl, 60);
+          const tracks: MusicTrack[] = pl.entries.map((entry) => ({
+            id: entry.id,
+            title: entry.title,
+            artist: entry.uploader || pl.uploader || platformInfo.name,
+            duration: entry.duration,
+            thumbnail: entry.thumbnail || pl.thumbnail,
+            url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`,
+            canDownload: true,
+            formats: generateAudioFormats(entry.url || `https://www.youtube.com/watch?v=${entry.id}`, entry.duration),
+          }));
+
+          res.json({
+            success: true,
+            data: {
+              type: 'playlist',
+              platform: platformInfo.name,
+              platformId: platformInfo.id,
+              platformColor: platformInfo.color,
+              title: pl.title,
+              artist: pl.uploader || platformInfo.name,
+              artwork: pl.thumbnail,
+              trackCount: tracks.length,
+              tracks,
+              canDownload: true,
+              formats: generateAudioFormats(rawUrl, 210),
+              officialUrl: rawUrl,
+              url: rawUrl,
+            },
+          });
+          return;
+        }
+        throw singleErr;
+      }
     }
 
     res.status(422).json({
@@ -579,11 +724,17 @@ router.post('/playlist/analyze', async (req: Request, res: Response): Promise<vo
   }
 
   try {
-    // For YouTube Music / YouTube playlists, use yt-dlp metadata
-    const info = await getYtDlpMetadata(rawUrl);
-    const title = info.title || 'Music Playlist';
-    const artist = info.uploader || platformInfo.name;
-    const artwork = info.thumbnail;
+    const pl = await getYtDlpPlaylistMetadata(rawUrl, 60);
+    const tracks: MusicTrack[] = pl.entries.map((entry) => ({
+      id: entry.id,
+      title: entry.title,
+      artist: entry.uploader || pl.uploader || platformInfo.name,
+      duration: entry.duration,
+      thumbnail: entry.thumbnail || pl.thumbnail,
+      url: entry.url || `https://www.youtube.com/watch?v=${entry.id}`,
+      canDownload: true,
+      formats: generateAudioFormats(entry.url || `https://www.youtube.com/watch?v=${entry.id}`, entry.duration),
+    }));
 
     res.json({
       success: true,
@@ -592,9 +743,11 @@ router.post('/playlist/analyze', async (req: Request, res: Response): Promise<vo
         platform: platformInfo.name,
         platformId: platformInfo.id,
         platformColor: platformInfo.color,
-        title,
-        artist,
-        artwork,
+        title: pl.title,
+        artist: pl.uploader || platformInfo.name,
+        artwork: pl.thumbnail,
+        trackCount: tracks.length,
+        tracks,
         canDownload: true,
         formats: generateAudioFormats(rawUrl, 210),
         officialUrl: rawUrl,

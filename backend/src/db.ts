@@ -22,7 +22,7 @@ export interface DownloadJob {
   mimeType?: string;
   fileSize?: number;
   filename?: string;
-  status: 'pending' | 'ready' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'ready' | 'processing' | 'paused' | 'completed' | 'failed' | 'cancelled';
   progress: number;
   errorMessage?: string;
   tempFilePath?: string;
@@ -97,6 +97,10 @@ export function updateJob(id: string, updates: Partial<DownloadJob>): void {
 export function deleteJob(id: string): void {
   const jobs = readFile<DownloadJob>(JOBS_FILE).filter(j => j.id !== id);
   writeFile(JOBS_FILE, jobs);
+}
+
+export function clearAllJobs(): void {
+  writeFile<DownloadJob>(JOBS_FILE, []);
 }
 
 // ────────────── History ──────────────

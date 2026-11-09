@@ -10,7 +10,7 @@ const router = Router();
 // Rate limit for stream proxy
 const streamLimiter = rateLimit({
   windowMs: 60 * 1000,
-  max: 60,
+  max: 300,
   message: { success: false, error: 'Too many download requests, please slow down.' },
 });
 

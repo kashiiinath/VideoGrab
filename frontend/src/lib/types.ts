@@ -92,8 +92,11 @@ export interface DownloadJob {
   mimeType?: string;
   fileSize?: number;
   filename?: string;
-  status: 'pending' | 'ready' | 'processing' | 'completed' | 'failed' | 'cancelled';
+  status: 'pending' | 'ready' | 'processing' | 'paused' | 'completed' | 'failed' | 'cancelled';
   progress: number;
+  speed?: string;
+  downloadedBytes?: number;
+  totalBytes?: number;
   errorMessage?: string;
   downloadUrl?: string;
   createdAt: number;

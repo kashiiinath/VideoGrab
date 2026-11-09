@@ -184,6 +184,173 @@ export interface YtDlpInfo {
   url?: string;
 }
 
+export interface YtDlpPlaylistEntry {
+  id: string;
+  title: string;
+  uploader?: string;
+  channel?: string;
+  duration?: number;
+  thumbnail?: string;
+  url?: string;
+}
+
+export interface YtDlpPlaylistInfo {
+  id: string;
+  title: string;
+  uploader?: string;
+  channel?: string;
+  description?: string;
+  thumbnail?: string;
+  playlist_count?: number;
+  entries: YtDlpPlaylistEntry[];
+}
+
+/**
+ * Extract playlist metadata and track entries using yt-dlp flat-playlist mode.
+ * Very fast because it does not fetch video stream player decryptions.
+ */
+export async function getYtDlpPlaylistMetadata(
+  url: string,
+  limit: number = 60
+): Promise<YtDlpPlaylistInfo> {
+  const binary = getYtDlpPath();
+
+  return new Promise((resolve, reject) => {
+    const baseArgs = [
+      '--no-warnings',
+      '--yes-playlist',
+      '--flat-playlist',
+      '--dump-single-json',
+      '--playlist-end', String(limit),
+      '--no-check-certificates',
+      '--socket-timeout', '20',
+      '--no-cache-dir',
+    ];
+
+    const node = getNodePath();
+    if (node) {
+      baseArgs.push('--js-runtimes', `node:${node}`);
+    }
+
+    const ff = getFfmpegPath();
+    if (ff) {
+      baseArgs.push('--ffmpeg-location', ff);
+    }
+
+    const args = [...baseArgs, url];
+
+    console.log(`[yt-dlp] Analyzing playlist (max ${limit}): ${url}`);
+    const child = spawn(binary, args);
+
+    const killTimer = setTimeout(() => {
+      child.kill('SIGKILL');
+      reject(new Error('Playlist analysis timed out. Please try again.'));
+    }, 90000);
+
+    let stdout = '';
+    let stderr = '';
+
+    child.stdout.on('data', (chunk) => {
+      stdout += chunk.toString();
+    });
+
+    child.stderr.on('data', (chunk) => {
+      const msg = chunk.toString();
+      stderr += msg;
+      if (!msg.includes('[download]') && !msg.includes('WARNING')) {
+        console.log(`[yt-dlp playlist stderr] ${msg.trim()}`);
+      }
+    });
+
+    child.on('error', (err) => {
+      clearTimeout(killTimer);
+      console.error(`[yt-dlp] Playlist spawn error: ${err.message}`);
+      reject(new Error(`Failed to execute yt-dlp: ${err.message}`));
+    });
+
+    child.on('close', (code) => {
+      clearTimeout(killTimer);
+      console.log(`[yt-dlp] Playlist analyze exited with code: ${code}`);
+
+      if (stdout.trim()) {
+        try {
+          const parsed = JSON.parse(stdout);
+          let rawEntries: any[] = [];
+          if (Array.isArray(parsed.entries)) {
+            rawEntries = parsed.entries.filter((e: any) => e != null);
+          } else if (parsed.id) {
+            rawEntries = [parsed];
+          }
+
+          const entries: YtDlpPlaylistEntry[] = rawEntries.map((e, idx) => {
+            const entryId = String(e.id || idx + 1);
+            const entryTitle = e.title || `Track ${idx + 1}`;
+            const entryUploader = e.uploader || e.channel || parsed.uploader || parsed.channel;
+            const entryDuration = typeof e.duration === 'number' ? Math.round(e.duration) : undefined;
+
+            let entryThumb: string | undefined = e.thumbnail;
+            if (!entryThumb && Array.isArray(e.thumbnails) && e.thumbnails.length > 0) {
+              entryThumb = e.thumbnails[e.thumbnails.length - 1]?.url;
+            }
+            if (!entryThumb && entryId && entryId.length === 11) {
+              entryThumb = `https://i.ytimg.com/vi/${entryId}/hqdefault.jpg`;
+            }
+
+            let entryUrl = e.url;
+            if (!entryUrl || !entryUrl.startsWith('http')) {
+              if (entryId && entryId.length === 11) {
+                entryUrl = `https://www.youtube.com/watch?v=${entryId}`;
+              } else if (url.includes('soundcloud.com') && e.url) {
+                entryUrl = e.url.startsWith('http') ? e.url : `https://soundcloud.com${e.url}`;
+              } else {
+                entryUrl = `https://www.youtube.com/watch?v=${entryId}`;
+              }
+            }
+
+            return {
+              id: entryId,
+              title: entryTitle,
+              uploader: entryUploader,
+              channel: e.channel,
+              duration: entryDuration,
+              thumbnail: entryThumb,
+              url: entryUrl,
+            };
+          });
+
+          let playlistThumb = parsed.thumbnail;
+          if (!playlistThumb && Array.isArray(parsed.thumbnails) && parsed.thumbnails.length > 0) {
+            playlistThumb = parsed.thumbnails[parsed.thumbnails.length - 1]?.url;
+          }
+          if (!playlistThumb && entries[0]?.thumbnail) {
+            playlistThumb = entries[0].thumbnail;
+          }
+
+          const result: YtDlpPlaylistInfo = {
+            id: parsed.id || 'playlist',
+            title: parsed.title || 'Music Playlist',
+            uploader: parsed.uploader || parsed.channel,
+            channel: parsed.channel,
+            description: parsed.description,
+            thumbnail: playlistThumb,
+            playlist_count: entries.length,
+            entries,
+          };
+
+          resolve(result);
+          return;
+        } catch (e: any) {
+          reject(new Error(`Failed to parse playlist data: ${e.message}`));
+          return;
+        }
+      }
+
+      const err = stderr.trim();
+      reject(new Error(err.split('\n').pop() || `Playlist analysis failed with code ${code}`));
+    });
+  });
+}
+
 /**
  * Extract metadata (title, thumbnail, formats) from a URL using yt-dlp.
  * Does NOT download — only fetches JSON info.
@@ -230,7 +397,7 @@ export async function getYtDlpMetadata(url: string): Promise<YtDlpInfo> {
       reject(new Error(`Failed to execute yt-dlp: ${err.message}`));
     });
 
-    child.on('close', (code) => {
+    child.on('close', async (code) => {
       clearTimeout(killTimer);
       console.log(`[yt-dlp] Analyze exited with code: ${code}`);
       if (code === 0 && stdout.trim()) {
@@ -244,6 +411,25 @@ export async function getYtDlpMetadata(url: string): Promise<YtDlpInfo> {
       } else {
         const err = stderr.trim();
         console.error(`[yt-dlp] Analysis failed. stderr: ${err.substring(0, 500)}`);
+
+        // If the URL is actually a playlist and failed because of --no-playlist, seamlessly fallback to playlist metadata
+        if (err.includes('is a playlist') || err.includes('--yes-playlist') || url.includes('/playlist') || url.includes('list=')) {
+          try {
+            console.log(`[yt-dlp] Detected playlist from error, falling back to playlist metadata: ${url}`);
+            const pl = await getYtDlpPlaylistMetadata(url, 60);
+            resolve({
+              id: pl.id,
+              title: pl.title,
+              uploader: pl.uploader,
+              thumbnail: pl.thumbnail,
+              _type: 'playlist',
+            });
+            return;
+          } catch {
+            // continue to normal error handling below
+          }
+        }
+
         if (err.includes('Sign in to confirm')) {
           reject(new Error('This video requires authentication or age verification.'));
         } else if (err.includes('Private video') || err.includes('Video unavailable')) {

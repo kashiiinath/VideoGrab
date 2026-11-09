@@ -7,9 +7,19 @@ interface UrlInputProps {
   onAnalyze: (url: string) => Promise<void>;
   loading: boolean;
   error: string;
+  placeholder?: string;
+  buttonLabel?: string;
+  loadingLabel?: string;
 }
 
-export default function UrlInput({ onAnalyze, loading, error }: UrlInputProps) {
+export default function UrlInput({
+  onAnalyze,
+  loading,
+  error,
+  placeholder = 'Paste video link here…',
+  buttonLabel = 'Analyze Video',
+  loadingLabel = 'Analyzing Video…',
+}: UrlInputProps) {
   const [url, setUrl] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -61,7 +71,7 @@ export default function UrlInput({ onAnalyze, loading, error }: UrlInputProps) {
             type="url"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
-            placeholder="Paste video link here…"
+            placeholder={placeholder}
             className="flex-1 py-3 text-[14px] font-medium text-[var(--vg-text-primary)] placeholder-[var(--vg-text-muted)] bg-transparent outline-none"
             autoComplete="off"
             autoCorrect="off"
@@ -119,12 +129,12 @@ export default function UrlInput({ onAnalyze, loading, error }: UrlInputProps) {
         {loading ? (
           <>
             <Loader2 size={18} className="animate-spin" />
-            <span>Analyzing Video…</span>
+            <span>{loadingLabel}</span>
           </>
         ) : (
           <>
             <Search size={18} strokeWidth={2.5} />
-            <span>Analyze Video</span>
+            <span>{buttonLabel}</span>
           </>
         )}
       </button>

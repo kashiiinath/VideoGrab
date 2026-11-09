@@ -144,8 +144,20 @@ export async function deleteDownload(id: string): Promise<void> {
   await api.delete(`/downloads/${id}`);
 }
 
+export async function clearAllDownloads(): Promise<void> {
+  await api.delete('/downloads');
+}
+
 export async function cancelDownload(id: string): Promise<void> {
   await api.post(`/downloads/${id}/cancel`);
+}
+
+export async function pauseDownload(id: string): Promise<void> {
+  await api.post(`/downloads/${id}/pause`);
+}
+
+export async function resumeDownload(id: string): Promise<void> {
+  await api.post(`/downloads/${id}/resume`);
 }
 
 export async function completeDownload(id: string, fileSize?: number): Promise<void> {
